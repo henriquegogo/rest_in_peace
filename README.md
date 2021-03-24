@@ -11,7 +11,7 @@ Return all tables
 /
 ```
 
-Get all items all from table
+Get all items from a table
 ```
 /table
 ```
