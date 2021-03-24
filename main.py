@@ -13,11 +13,11 @@ class Database():
 
 
     def tables(self):
-        tables = []
+        items = []
         for row in self.cursor.execute('SELECT name FROM sqlite_master WHERE type="table"'):
-            if row[0][0:7] != 'sqlite_': tables.append(row[0])
+            if row[0][0:7] != 'sqlite_': items.append(row[0])
 
-        return tables
+        return items
 
 
     def findall(self, table):
