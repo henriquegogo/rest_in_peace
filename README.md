@@ -16,10 +16,16 @@ Get all items all from table
 /table
 ```
 
-Get aa specific item from table
+Get a specific item from table
 ```
 /table/item_id
 ```
+
+## Next steps
+- Add WHERE as query string params
+- INSERT data with POST requests
+- UPDATE data with PUT requests
+- DELETE data with DELETE requests
 
 # License
 MIT
