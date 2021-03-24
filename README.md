@@ -1,9 +1,16 @@
-# debop
+# sqlite-rest
 
 # [THIS IS EXTREMELY PRE-ALPHA-DEV-STAGE]
 
 ## What is?
 Is a SQLite abstraction to use as a REST API with zero config.
+
+## How to install and use
+(Not published yet)
+```
+pip install sqlite-rest
+sqlite-rest database.db
+```
 
 ## Routes
 Return all tables
