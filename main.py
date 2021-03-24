@@ -1,22 +1,11 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import sqlite3, json
+import sys, sqlite3, json
 
 
 class Database():
     def __init__(self):
         self.connection = sqlite3.connect('database.db')
         self.cursor = self.connection.cursor()
-
-
-    def create(self):
-        self.cursor.execute('CREATE TABLE clientes (nome text, endereco text)')
-        self.connection.commit()
-
-
-    def seed(self):
-        self.cursor.execute('INSERT INTO clientes VALUES(?, ?)', ('Henrique', 'Av Herois do Acre'))
-        self.cursor.execute('INSERT INTO clientes VALUES(?, ?)', ('Daiane', 'Av Herois do Acre'))
-        self.connection.commit()
 
 
     def close(self):
@@ -26,9 +15,10 @@ class Database():
     def tables(self):
         tables = []
         for row in self.cursor.execute('SELECT name FROM sqlite_master WHERE type="table"'):
-            tables.append(row[0])
+            if row[0][0:7] != 'sqlite_': tables.append(row[0])
 
         return tables
+
 
     def findall(self, table):
         schema = []
@@ -46,19 +36,42 @@ class Database():
         return items
 
 
+    def findone(self, table, id):
+        schema = []
+        for row in self.cursor.execute(f'PRAGMA table_info({table})'):
+            schema.append(row[1])
+
+        for row in self.cursor.execute(f'SELECT * FROM {table} WHERE id = ?', id):
+            item = {}
+            for i in range(len(row)):
+                item[schema[i]] = row[i]
+            break;
+
+        return item
+
+
 class RequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         db = Database()
         data = {}
+        paths = self.path.split('/')
 
-        if self.path == '/':
-            data = db.tables()
+        try:
+            if self.path == '/':
+                data = db.tables()
 
-        elif len(self.path.split('/')) == 2:
-            table = self.path[1:]
-            data = db.findall(table)
+            elif len(self.path.split('/')) == 2:
+                table = paths[1]
+                data = db.findall(table)
 
-        else:
+            elif len(self.path.split('/')) == 3:
+                table = paths[1]
+                id = paths[2]
+                data = db.findone(table, id)
+
+            else:
+                self.send_response(404)
+        except:
             self.send_response(404)
 
         self.send_response(200)
@@ -74,9 +87,6 @@ def start_server(port):
 
 
 def main():
-    #db = Database()
-    #db.seed()
-    #db.close()
     start_server(8000)
 
 
