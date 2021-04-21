@@ -99,7 +99,7 @@ def start_server(port):
 
 
 def main():
-    start_server(8000)
+    start_server(int(sys.argv[2]) if len(sys.argv) > 2 else 8000)
 
 
 if __name__ == '__main__':
