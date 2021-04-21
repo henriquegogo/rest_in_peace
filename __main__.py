@@ -20,13 +20,13 @@ class Database():
         return items
 
 
-    def findall(self, table):
+    def findall(self, table, where):
         schema = []
         for row in self.cursor.execute(f'PRAGMA table_info({table})'):
             schema.append(row[1])
 
         items = []
-        for row in self.cursor.execute(f'SELECT * FROM {table}'):
+        for row in self.cursor.execute(f'SELECT * FROM {table} WHERE {where}'):
             item = {}
             for i in range(len(row)):
                 item[schema[i]] = row[i]
@@ -36,12 +36,12 @@ class Database():
         return items
 
 
-    def findone(self, table, column, value):
+    def findone(self, table, id):
         schema = []
         for row in self.cursor.execute(f'PRAGMA table_info({table})'):
             schema.append(row[1])
 
-        for row in self.cursor.execute(f'SELECT * FROM {table} WHERE {column} = ?', value):
+        for row in self.cursor.execute(f'SELECT * FROM {table} WHERE id = ?', id):
             item = {}
             for i in range(len(row)):
                 item[schema[i]] = row[i]
@@ -58,7 +58,9 @@ class RequestHandler(SimpleHTTPRequestHandler):
         else:
             db = Database()
             data = {}
-            path = self.path[4:]
+            path_split = self.path.split('?')
+            path = path_split[0][4:]
+            where = path_split[1].replace('&', ' AND ') if len(path_split) > 1 else 'TRUE'
             paths = path.split('/')
 
             try:
@@ -67,18 +69,12 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
                 elif len(path.split('/')) == 2:
                     table = paths[1]
-                    data = db.findall(table)
+                    data = db.findall(table, where)
 
                 elif len(path.split('/')) == 3:
                     table = paths[1]
                     id = paths[2]
-                    data = db.findone(table, 'id', id)
-
-                elif len(path.split('/')) == 4:
-                    table = paths[1]
-                    column = paths[2]
-                    value = paths[3]
-                    data = db.findone(table, column, value)
+                    data = db.findone(table, id)
 
                 else:
                     self.send_response(404)
