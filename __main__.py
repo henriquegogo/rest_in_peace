@@ -5,16 +5,12 @@ import sys, sqlite3, json
 class Database():
     def __init__(self):
         self.connection = sqlite3.connect(sys.argv[1] or 'database.db')
-        self.cursor = self.connection.cursor()
-
-
-    def close(self):
-        self.connection.close()
+        self.execute = self.connection.cursor().execute
 
 
     def tables(self):
         items = []
-        for row in self.cursor.execute('SELECT name FROM sqlite_master WHERE type="table" OR type="view"'):
+        for row in self.execute('SELECT name FROM sqlite_master WHERE type="table" OR type="view"'):
             if row[0][0:7] != 'sqlite_': items.append(row[0])
 
         return items
@@ -22,11 +18,11 @@ class Database():
 
     def findall(self, table, where):
         schema = []
-        for row in self.cursor.execute(f'PRAGMA table_info({table})'):
+        for row in self.execute(f'PRAGMA table_info({table})'):
             schema.append(row[1])
 
         items = []
-        for row in self.cursor.execute(f'SELECT * FROM {table} WHERE {where}'):
+        for row in self.execute(f'SELECT * FROM {table} WHERE {where}'):
             item = {}
             for i in range(len(row)):
                 item[schema[i]] = row[i]
@@ -38,10 +34,10 @@ class Database():
 
     def findone(self, table, id):
         schema = []
-        for row in self.cursor.execute(f'PRAGMA table_info({table})'):
+        for row in self.execute(f'PRAGMA table_info({table})'):
             schema.append(row[1])
 
-        for row in self.cursor.execute(f'SELECT * FROM {table} WHERE id = ?', id):
+        for row in self.execute(f'SELECT * FROM {table} WHERE id = ?', id):
             item = {}
             for i in range(len(row)):
                 item[schema[i]] = row[i]
@@ -53,39 +49,47 @@ class Database():
 class RequestHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path[:4] != '/api':
-            super().do_GET()
+            return super().do_GET()
 
-        else:
-            db = Database()
-            data = {}
-            path_split = self.path.split('?')
-            path = path_split[0][4:]
-            where = path_split[1].replace('&', ' AND ') if len(path_split) > 1 else 'TRUE'
-            paths = path.split('/')
+        db = Database()
+        data = {}
+        path_split = self.path.split('?')
+        path = path_split[0][4:]
+        where = path_split[1].replace('&', ' AND ') if len(path_split) > 1 else 'TRUE'
+        paths = path.split('/')
 
-            try:
-                if path == '' or path == '/':
-                    data = db.tables()
+        try:
+            if path == '' or path == '/':
+                data = db.tables()
 
-                elif len(path.split('/')) == 2:
-                    table = paths[1]
-                    data = db.findall(table, where)
+            elif len(path.split('/')) == 2:
+                table = paths[1]
+                data = db.findall(table, where)
 
-                elif len(path.split('/')) == 3:
-                    table = paths[1]
-                    id = paths[2]
-                    data = db.findone(table, id)
+            elif len(path.split('/')) == 3:
+                table = paths[1]
+                id = paths[2]
+                data = db.findone(table, id)
 
-                else:
-                    self.send_response(404)
-            except:
+            else:
                 self.send_response(404)
+        except:
+            self.send_response(404)
 
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps(data).encode())
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode())
 
+
+    def do_POST(self):
+        db = Database()
+        path_split = self.path.split('?')
+        path = path_split[0][4:]
+        where = path_split[1].replace('&', ' AND ') if len(path_split) > 1 else 'TRUE'
+        paths = path.split('/')
+
+        self.send_response(200)
 
 
 def start_server(port):
