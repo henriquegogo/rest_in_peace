@@ -1,4 +1,4 @@
-from http.server import HTTPServer, BaseHTTPRequestHandler, SimpleHTTPRequestHandler
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 import sys, sqlite3, json
 
 
@@ -37,13 +37,17 @@ class Database():
         for row in self.execute(f'PRAGMA table_info({table})'):
             schema.append(row[1])
 
+        item = {}
         for row in self.execute(f'SELECT * FROM {table} WHERE id = ?', id):
-            item = {}
             for i in range(len(row)):
                 item[schema[i]] = row[i]
             break;
 
         return item
+
+
+    def insert(self, table, data):
+        self.execute(f'INSERT INTO {table} (name) VALUES(?)', data)
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
@@ -86,10 +90,19 @@ class RequestHandler(SimpleHTTPRequestHandler):
         db = Database()
         path_split = self.path.split('?')
         path = path_split[0][4:]
-        where = path_split[1].replace('&', ' AND ') if len(path_split) > 1 else 'TRUE'
         paths = path.split('/')
 
-        self.send_response(200)
+        try:
+            if len(path.split('/')) == 2:
+                table = paths[1]
+                db.insert(table, '')
+
+            else:
+                self.send_response(404)
+        except:
+            self.send_response(404)
+
+        self.send_response(201)
 
 
 def start_server(port):
