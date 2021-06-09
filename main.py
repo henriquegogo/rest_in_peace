@@ -1,13 +1,11 @@
-import sqlite3
-
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import create_engine
 
 
 class Database():
     def __init__(self):
-        self.connection = sqlite3.connect('./database.db')
-        self.execute = self.connection.cursor().execute
+        self.execute = create_engine('sqlite:///database.db').execute
 
 
     def tables(self):
@@ -40,7 +38,7 @@ class Database():
             schema.append(row[1])
 
         item = {}
-        for row in self.execute(f'SELECT * FROM {table} WHERE id = ?', id):
+        for row in self.execute(f'SELECT * FROM {table} WHERE id = {id}'):
             for i in range(len(row)):
                 item[schema[i]] = row[i]
             break;
@@ -49,26 +47,24 @@ class Database():
 
 
     def insert(self, table, data):
-        self.execute(f'INSERT INTO {table} (name) VALUES(?)', data)
+        self.execute(f'INSERT INTO {table} (name) VALUES({data})')
 
 
+db = Database()
 app = FastAPI()
 
 @app.get('/api')
 def tables():
-    db = Database()
     tables = db.tables()
     return tables
 
 @app.get('/api/{table}')
-def findall(table):
-    db = Database()
-    items = db.findall(table, 'TRUE')
+def findall(table, where = 'TRUE'):
+    items = db.findall(table, where)
     return items
 
 @app.get('/api/{table}/{id}')
 def findone(table, id):
-    db = Database()
     items = db.findone(table, id)
     return items
 
