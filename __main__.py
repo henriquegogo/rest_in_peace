@@ -4,13 +4,13 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine # type: ignore
 from sys import argv
-from uvicorn import run
+from uvicorn import run # type: ignore
 
 Alphanum = Union[str, int, float]
 
 
 class Database():
-    def __init__(self):
+    def __init__(self) -> None:
         self.execute = create_engine(f'sqlite:///{argv[1] or "database.db"}').execute
 
 
@@ -52,7 +52,7 @@ class Database():
         return item
 
 
-    def insert(self, table: str, data: str):
+    def insert(self, table: str, data: str) -> None:
         self.execute(f'INSERT INTO {table} (name) VALUES({data})')
 
 
