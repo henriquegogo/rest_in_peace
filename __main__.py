@@ -3,13 +3,15 @@ from typing import Dict, List, Union
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine # type: ignore
+from sys import argv
+from uvicorn import run
 
 Alphanum = Union[str, int, float]
 
 
 class Database():
     def __init__(self):
-        self.execute = create_engine('sqlite:///database.db').execute
+        self.execute = create_engine(f'sqlite:///{argv[1] or "database.db"}').execute
 
 
     def tables(self) -> List[str]:
@@ -73,3 +75,6 @@ def findone(table: str, id: int) -> Dict[str, Alphanum]:
     return items
 
 app.mount('/', StaticFiles(directory='.', html=True), name="static")
+
+if __name__ == '__main__':
+    run('__main__:app')
