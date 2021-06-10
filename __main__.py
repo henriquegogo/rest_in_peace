@@ -1,29 +1,33 @@
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-import sys, sqlite3, json
+from typing import Dict, List, Union
+
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy import create_engine # type: ignore
+
+Alphanum = Union[str, int, float]
 
 
 class Database():
     def __init__(self):
-        self.connection = sqlite3.connect(sys.argv[1] or 'database.db')
-        self.execute = self.connection.cursor().execute
+        self.execute = create_engine('sqlite:///database.db').execute
 
 
-    def tables(self):
-        items = []
+    def tables(self) -> List[str]:
+        items: List[str] = []
         for row in self.execute('SELECT name FROM sqlite_master WHERE type="table" OR type="view"'):
             if row[0][0:7] != 'sqlite_': items.append(row[0])
 
         return items
 
 
-    def findall(self, table, where):
-        schema = []
+    def findall(self, table: str, where: str) -> List[Dict[str, Alphanum]]:
+        schema: List[str] = []
         for row in self.execute(f'PRAGMA table_info({table})'):
             schema.append(row[1])
 
-        items = []
+        items: List[Dict[str, Alphanum]] = []
         for row in self.execute(f'SELECT * FROM {table} WHERE {where}'):
-            item = {}
+            item: Dict[str, Alphanum] = {}
             for i in range(len(row)):
                 item[schema[i]] = row[i]
 
@@ -32,13 +36,13 @@ class Database():
         return items
 
 
-    def findone(self, table, id):
-        schema = []
+    def findone(self, table: str, id: int) -> Dict[str, Alphanum]:
+        schema: List[str] = []
         for row in self.execute(f'PRAGMA table_info({table})'):
             schema.append(row[1])
 
-        item = {}
-        for row in self.execute(f'SELECT * FROM {table} WHERE id = ?', id):
+        item: Dict[str, Alphanum] = {}
+        for row in self.execute(f'SELECT * FROM {table} WHERE id = {id}'):
             for i in range(len(row)):
                 item[schema[i]] = row[i]
             break;
@@ -46,74 +50,26 @@ class Database():
         return item
 
 
-    def insert(self, table, data):
-        self.execute(f'INSERT INTO {table} (name) VALUES(?)', data)
+    def insert(self, table: str, data: str):
+        self.execute(f'INSERT INTO {table} (name) VALUES({data})')
 
 
-class RequestHandler(SimpleHTTPRequestHandler):
-    def do_GET(self):
-        if self.path[:4] != '/api':
-            return super().do_GET()
+db: Database = Database()
+app: FastAPI = FastAPI()
 
-        db = Database()
-        data = {}
-        path_split = self.path.split('?')
-        path = path_split[0][4:]
-        where = path_split[1].replace('&', ' AND ') if len(path_split) > 1 else 'TRUE'
-        paths = path.split('/')
+@app.get('/api')
+def tables() -> List[str]:
+    tables: List[str] = db.tables()
+    return tables
 
-        try:
-            if path == '' or path == '/':
-                data = db.tables()
+@app.get('/api/{table}')
+def findall(table: str, where: str = 'TRUE') -> List[Dict[str, Alphanum]]:
+    items: List[Dict[str, Alphanum]] = db.findall(table, where)
+    return items
 
-            elif len(path.split('/')) == 2:
-                table = paths[1]
-                data = db.findall(table, where)
+@app.get('/api/{table}/{id}')
+def findone(table: str, id: int) -> Dict[str, Alphanum]:
+    items: Dict[str, Alphanum] = db.findone(table, id)
+    return items
 
-            elif len(path.split('/')) == 3:
-                table = paths[1]
-                id = paths[2]
-                data = db.findone(table, id)
-
-            else:
-                self.send_response(404)
-        except:
-            self.send_response(404)
-
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
-        self.wfile.write(json.dumps(data).encode())
-
-
-    def do_POST(self):
-        db = Database()
-        path_split = self.path.split('?')
-        path = path_split[0][4:]
-        paths = path.split('/')
-
-        try:
-            if len(path.split('/')) == 2:
-                table = paths[1]
-                db.insert(table, '')
-
-            else:
-                self.send_response(404)
-        except:
-            self.send_response(404)
-
-        self.send_response(201)
-
-
-def start_server(port):
-    server = HTTPServer(('', port), RequestHandler)
-    print(f'Server started in port {port}')
-    server.serve_forever()
-
-
-def main():
-    start_server(int(sys.argv[2]) if len(sys.argv) > 2 else 8000)
-
-
-if __name__ == '__main__':
-    main()
+app.mount('/', StaticFiles(directory='.', html=True), name="static")
