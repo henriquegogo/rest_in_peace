@@ -16,33 +16,33 @@ sqlite-rest STATIC_HTML_FOLDER DATABASE.db PORT
 ```
 
 ## Routes
-Serve static HTML files
-```
-/*
-```
-
 Return all tables
 ```
-/api/
+GET /
 ```
 
 Get all items from a table
 ```
-/api/table
+GET /table
 ```
 
 Get a specific item from table
 ```
-/api/table/item_id
+GET /table/item_id
 ```
 
 Get filtered from a table
 ```
-/api/table?id=item_id
+GET /table?id=item_id
+```
+
+Insert an item in a table
+```
+POST /table
+DATA name=New
 ```
 
 ## Next steps
-- INSERT data with POST requests
 - UPDATE data with PUT requests
 - DELETE data with DELETE requests
 
