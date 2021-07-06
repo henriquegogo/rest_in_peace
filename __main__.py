@@ -1,7 +1,7 @@
 from sys import argv
-from typing import Dict, List, Union
+from typing import Dict, List, Iterator, Union, Tuple
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask.wrappers import Response
 from sqlalchemy import create_engine
 
@@ -38,17 +38,7 @@ class Database():
 
 
     def findone(self, table: str, id: int) -> Dict[str, Alphanum]:
-        schema: List[str] = []
-        for row in self.execute(f'PRAGMA table_info({table})'):
-            schema.append(row[1])
-
-        item: Dict[str, Alphanum] = {}
-        for row in self.execute(f'SELECT * FROM {table} WHERE id = {id}'):
-            for i in range(len(row)):
-                item[schema[i]] = row[i]
-            break;
-
-        return item
+        return self.findall(table, f'id = {id}')[0]
 
 
     def insert(self, table: str, data: str) -> None:
@@ -64,7 +54,10 @@ def tables() -> Response:
     return jsonify(tables)
 
 @app.get('/<table>')
-def findall(table: str, where: str = 'TRUE') -> Response:
+def findall(table: str) -> Response:
+    args: Iterator[Tuple[str, str]] = request.args.items()
+    criteria: List[str] = [f'{arg[0]}="{arg[1]}"' for arg in args]
+    where = ' AND '.join(criteria)
     items: List[Dict[str, Alphanum]] = db.findall(table, where)
     return jsonify(items)
 
