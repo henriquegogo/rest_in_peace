@@ -1,5 +1,5 @@
 from sys import argv
-from typing import Dict, List, Iterator, Union, Tuple
+from typing import Dict, Iterator, List, Tuple, Union
 
 from flask import Flask, jsonify, request
 from flask.wrappers import Response
@@ -41,8 +41,8 @@ class Database():
         return self.findall(table, f'id = {id}')[0]
 
 
-    def insert(self, table: str, data: str) -> None:
-        self.execute(f'INSERT INTO {table} (name) VALUES({data})')
+    def insert(self, table: str, keys: List[str], values: List[str]) -> None:
+        self.execute(f'INSERT INTO {table} ({", ".join(keys)}) VALUES({", ".join(values)})')
 
 
 db: Database = Database()
@@ -57,7 +57,7 @@ def tables() -> Response:
 def findall(table: str) -> Response:
     args: Iterator[Tuple[str, str]] = request.args.items()
     criteria: List[str] = [f'{arg[0]}="{arg[1]}"' for arg in args]
-    where = ' AND '.join(criteria)
+    where = ' AND '.join(criteria) if len(criteria) > 0 else 'TRUE'
     items: List[Dict[str, Alphanum]] = db.findall(table, where)
     return jsonify(items)
 
@@ -65,6 +65,13 @@ def findall(table: str) -> Response:
 def findone(table: str, id: int) -> Response:
     items: Dict[str, Alphanum] = db.findone(table, id)
     return jsonify(items)
+
+@app.post('/<table>')
+def insert(table: str) -> Response:
+    keys: List[str] = list(request.form.keys())
+    values: List[str] = [f'"{value}"' for value in request.form.values()]
+    db.insert(table, keys, values)
+    return jsonify('OK')
 
 if __name__ == '__main__':
     app.run()
