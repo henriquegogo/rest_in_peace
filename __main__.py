@@ -1,17 +1,16 @@
+from sys import argv
 from typing import Dict, List, Union
 
-from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from sqlalchemy import create_engine # type: ignore
-from sys import argv
-from uvicorn import run # type: ignore
+from flask import Flask, jsonify
+from flask.wrappers import Response
+from sqlalchemy import create_engine
 
 Alphanum = Union[str, int, float]
 
 
 class Database():
     def __init__(self) -> None:
-        self.execute = create_engine(f'sqlite:///{argv[1] or "database.db"}').execute
+        self.execute = create_engine(f'sqlite:///{argv[1] if len(argv) > 1 else "database.db"}').execute
 
 
     def tables(self) -> List[str]:
@@ -57,24 +56,22 @@ class Database():
 
 
 db: Database = Database()
-app: FastAPI = FastAPI()
+app: Flask = Flask(__name__)
 
-@app.get('/api')
-def tables() -> List[str]:
+@app.get('/')
+def tables() -> Response:
     tables: List[str] = db.tables()
-    return tables
+    return jsonify(tables)
 
-@app.get('/api/{table}')
-def findall(table: str, where: str = 'TRUE') -> List[Dict[str, Alphanum]]:
+@app.get('/<table>')
+def findall(table: str, where: str = 'TRUE') -> Response:
     items: List[Dict[str, Alphanum]] = db.findall(table, where)
-    return items
+    return jsonify(items)
 
-@app.get('/api/{table}/{id}')
-def findone(table: str, id: int) -> Dict[str, Alphanum]:
+@app.get('/<table>/<id>')
+def findone(table: str, id: int) -> Response:
     items: Dict[str, Alphanum] = db.findone(table, id)
-    return items
-
-app.mount('/', StaticFiles(directory='.', html=True), name="static")
+    return jsonify(items)
 
 if __name__ == '__main__':
-    run('__main__:app')
+    app.run()
