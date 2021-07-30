@@ -26,15 +26,17 @@ def create() -> Response:
 
 @app.get('/<id>')
 def read(id: str) -> Response:
-    data: str = db.get(id.encode()).decode()
+    data: str = db.get(id.encode())
 
     return jsonify(data)
 
 @app.put('/<id>')
-def update(id: str, body: str) -> Response:
-    data: str = db.put(id.encode(), body.encode())
+def update(id: str) -> Response:
+    data: str = request.get_data(as_text=True)
 
-    return jsonify(data)
+    db.put(id.encode(), data.encode())
+
+    return Response(status=200)
 
 @app.delete('/<id>')
 def delete(id: str) -> Response:
