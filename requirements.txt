@@ -1,2 +1,2 @@
 Flask==2.0.1
-SQLAlchemy==1.4.17
+plyvel==1.3.0

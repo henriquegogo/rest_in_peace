@@ -1,50 +1,44 @@
-# sqlite-rest
+# Da-Da-Da (Database API)
 
 ## What is?
-Is a SQLite abstraction to use as a REST API with zero config.
-It will raise a simple static html server and create an /api route that represents sql tables.
-
-## Could I use in production?
-No. This isn't prepared for production, have a simple http server and doesn't prevent things like SQL injection.
-Only use in development mode.
+Is a database abstraction to use as a REST API with zero config.
 
 ## How to install and use
 (Not published yet)
 ```
-pip install sqlite-rest
-sqlite-rest STATIC_HTML_FOLDER DATABASE.db PORT
+pip install dadada
 ```
 
 ## Routes
-Return all tables
+Return all data
 ```
 GET /
 ```
 
-Get all items from a table
+Get a specific item
 ```
-GET /table
-```
-
-Get a specific item from table
-```
-GET /table/item_id
+GET /item_id
 ```
 
-Get filtered from a table
+Create an item
 ```
-GET /table?id=item_id
+POST /item_id
+DATA 'Data'
 ```
 
-Insert an item in a table
+Update an item
 ```
-POST /table
-DATA name=New
+PUT /item_id
+DATA 'Data'
+```
+
+Delete an item
+```
+DELETE /item_id
 ```
 
 ## Next steps
-- UPDATE data with PUT requests
-- DELETE data with DELETE requests
+- Context / tables
 
 # License
 MIT
