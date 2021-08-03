@@ -10,7 +10,7 @@ app.config['JSON_AS_ASCII'] = False
 def root() -> Response:
     items: list[str] = []
 
-    for _, value in db.iterator(prefix=b'_tables:'):
+    for _, value in db.iterator(prefix=b'_collections:'):
         items.append(value.decode())
 
     return jsonify(items)
@@ -30,7 +30,7 @@ def create(collection: str) -> Response:
     key: str = collection + ':' + str(uuid4())
     data: str = request.get_data(as_text=True)
 
-    db.put(('_tables:' + collection).encode(), collection.encode())
+    db.put(('_collections:' + collection).encode(), collection.encode())
     db.put(key.encode(), data.encode())
 
     return Response(status=200)

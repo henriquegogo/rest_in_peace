@@ -10,35 +10,40 @@ pip install dadada
 ```
 
 ## Routes
-Return all data
+Return all collections
 ```
 GET /
 ```
 
+Return all items from collection
+```
+GET /<collection>
+```
+
 Get a specific item
 ```
-GET /item_id
+GET /<collection>/<id>
 ```
 
 Create an item
 ```
-POST /item_id
+POST /<collection>/<id>
 DATA 'Data'
 ```
 
 Update an item
 ```
-PUT /item_id
+PUT /<collection>/<id>
 DATA 'Data'
 ```
 
 Delete an item
 ```
-DELETE /item_id
+DELETE /<collection>/<id>
 ```
 
 ## Next steps
-- Context / tables
+- Search
 
 # License
 MIT
