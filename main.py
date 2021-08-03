@@ -8,39 +8,53 @@ app.config['JSON_AS_ASCII'] = False
 
 @app.get('/')
 def root() -> Response:
-    items: dict[str, str] = {}
+    items: list[str] = []
 
-    for key, value in db.iterator():
-        items[key.decode()] = value.decode()
+    for _, value in db.iterator(prefix=b'_tables:'):
+        items.append(value.decode())
 
     return jsonify(items)
 
-@app.post('/')
-def create() -> Response:
-    id: str = str(uuid4())
+@app.get('/<collection>')
+def list(collection: str) -> Response:
+    items: dict[str, str] = {}
+
+    for key, value in db.iterator(prefix=(collection + ':').encode()):
+        prefix_length = len(collection) + 1
+        items[key.decode()[prefix_length:]] = value.decode()
+
+    return jsonify(items)
+
+@app.post('/<collection>')
+def create(collection: str) -> Response:
+    key: str = collection + ':' + str(uuid4())
     data: str = request.get_data(as_text=True)
 
-    db.put(id.encode(), data.encode())
+    db.put(('_tables:' + collection).encode(), collection.encode())
+    db.put(key.encode(), data.encode())
 
     return Response(status=200)
 
-@app.get('/<id>')
-def read(id: str) -> Response:
-    data: str = db.get(id.encode())
+@app.get('/<collection>/<id>')
+def read(collection: str, id: str) -> Response:
+    key: str = collection + ':' + id
+    data: str = db.get(key.encode()).decode()
 
     return jsonify(data)
 
-@app.put('/<id>')
-def update(id: str) -> Response:
+@app.put('/<collection>/<id>')
+def update(collection: str, id: str) -> Response:
+    key: str = collection + ':' + id
     data: str = request.get_data(as_text=True)
 
-    db.put(id.encode(), data.encode())
+    db.put(key.encode(), data.encode())
 
     return Response(status=200)
 
-@app.delete('/<id>')
-def delete(id: str) -> Response:
-    db.delete(id.encode())
+@app.delete('/<collection>/<id>')
+def delete(collection: str, id: str) -> Response:
+    key: str = collection + ':' + id
+    db.delete(key.encode())
 
     return Response(status=200)
 
