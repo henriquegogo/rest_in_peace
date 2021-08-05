@@ -1,6 +1,7 @@
 from flask import Flask, Response, jsonify, request
 from plyvel import DB # type: ignore
 from uuid import uuid4
+from typing import Optional
 
 db: DB = DB('database', create_if_missing=True)
 app: Flask = Flask(__name__)
@@ -18,8 +19,12 @@ def root() -> Response:
 @app.get('/<collection>')
 def list(collection: str) -> Response:
     items: dict[str, str] = {}
+    search: Optional[str] = request.args.get('q')
 
     for key, value in db.iterator(prefix=(collection + ':').encode()):
+        if search and search not in value.decode():
+            continue
+
         prefix_length = len(collection) + 1
         items[key.decode()[prefix_length:]] = value.decode()
 

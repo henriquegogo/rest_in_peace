@@ -42,8 +42,5 @@ Delete an item
 DELETE /<collection>/<id>
 ```
 
-## Next steps
-- Search
-
 # License
 MIT
