@@ -22,7 +22,7 @@ def list(collection: str) -> Response:
     search: Optional[str] = request.args.get('q')
 
     for key, value in db.iterator(prefix=(collection + ':').encode()):
-        if search and search not in value.decode():
+        if search and search not in value.decode().replace('\\', '').replace('\"', ''):
             continue
 
         prefix_length = len(collection) + 1
