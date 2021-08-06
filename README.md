@@ -42,5 +42,8 @@ Delete an item
 DELETE /<collection>/<id>
 ```
 
+## Next steps
+- List unique ids
+
 # License
 MIT

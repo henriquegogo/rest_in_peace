@@ -2,6 +2,7 @@ from flask import Flask, Response, jsonify, request
 from plyvel import DB # type: ignore
 from uuid import uuid4
 from typing import Optional
+import json
 
 db: DB = DB('database', create_if_missing=True)
 app: Flask = Flask(__name__)
@@ -9,7 +10,7 @@ app.config['JSON_AS_ASCII'] = False
 
 @app.get('/')
 def root() -> Response:
-    items: list[str] = []
+    items = []
 
     for _, value in db.iterator(prefix=b'_collections:'):
         items.append(value.decode())
@@ -22,7 +23,7 @@ def list(collection: str) -> Response:
     search: Optional[str] = request.args.get('q')
 
     for key, value in db.iterator(prefix=(collection + ':').encode()):
-        if search and search not in value.decode().replace('\\', '').replace('\"', ''):
+        if search and search not in value.decode():
             continue
 
         prefix_length = len(collection) + 1
@@ -33,26 +34,45 @@ def list(collection: str) -> Response:
 @app.post('/<collection>')
 def create(collection: str) -> Response:
     key: str = collection + ':' + str(uuid4())
-    data: str = request.get_data(as_text=True)
-
     db.put(('_collections:' + collection).encode(), collection.encode())
-    db.put(key.encode(), data.encode())
+
+    if request.json:
+        data: Optional[str] = json.dumps(request.json)
+        db.put(key.encode(), data.encode())
+    else:
+        for arg in request.form:
+            data: Optional[str] = request.form.get(arg)
+            db.put((key + ':' + arg).encode(), data.encode())
 
     return Response(status=200)
 
 @app.get('/<collection>/<id>')
 def read(collection: str, id: str) -> Response:
     key: str = collection + ':' + id
-    data: str = db.get(key.encode()).decode()
+    data: bytes = db.get(key.encode())
 
-    return jsonify(data)
+    if data:
+        return json.loads(data.decode())
+    else:
+        items: dict[str, str] = {}
+
+        for prop, value in db.iterator(prefix=(key + ':').encode()):
+            prefix_length = len(key) + 1
+            items[prop.decode()[prefix_length:]] = value.decode()
+
+        return jsonify(items)
 
 @app.put('/<collection>/<id>')
 def update(collection: str, id: str) -> Response:
     key: str = collection + ':' + id
-    data: str = request.get_data(as_text=True)
 
-    db.put(key.encode(), data.encode())
+    if request.json:
+        data: Optional[str] = str(request.json)
+        db.put(key.encode(), data.encode())
+    else:
+        for arg in request.form:
+            data: Optional[str] = request.form.get(arg)
+            db.put((key + ':' + arg).encode(), data.encode())
 
     return Response(status=200)
 
@@ -60,6 +80,9 @@ def update(collection: str, id: str) -> Response:
 def delete(collection: str, id: str) -> Response:
     key: str = collection + ':' + id
     db.delete(key.encode())
+
+    for prop, _ in db.iterator(prefix=(key + ':').encode()):
+        db.delete(prop)
 
     return Response(status=200)
 
