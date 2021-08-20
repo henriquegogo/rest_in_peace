@@ -27,7 +27,12 @@ def list(collection: str) -> Response:
             continue
 
         prefix_length = len(collection) + 1
-        items[key.decode()[prefix_length:]] = value.decode()
+        id: str = key.decode()[prefix_length:]
+
+        try:
+            items[id] = json.loads(value.decode())
+        except:
+            items[id] = value.decode()
 
     return jsonify(items)
 
