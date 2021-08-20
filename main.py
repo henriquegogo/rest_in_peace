@@ -19,20 +19,32 @@ def root() -> Response:
 
 @app.get('/<collection>')
 def list(collection: str) -> Response:
-    items: dict[str, str] = {}
+    items = {}
     search: Optional[str] = request.args.get('q')
 
-    for key, value in db.iterator(prefix=(collection + ':').encode()):
+    for prefix_key, value in db.iterator(prefix=(collection + ':').encode()):
         if search and search not in value.decode():
             continue
 
         prefix_length = len(collection) + 1
-        id: str = key.decode()[prefix_length:]
+        key: str = prefix_key.decode()[prefix_length:]
+        id: str = key.split(':')[0]
 
         try:
-            items[id] = json.loads(value.decode())
+            if value.decode().isnumeric():
+                raise
+            else:
+                items[id] = json.loads(value.decode())
         except:
-            items[id] = value.decode()
+            if len(key) > len(id) and ':' in key:
+                if not id in items:
+                    items[id] = {}
+
+                prop = key.split(':')[1]
+                items[id][prop] = value.decode()
+
+            else:
+                items[id] = value.decode()
 
     return jsonify(items)
 
