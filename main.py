@@ -26,7 +26,7 @@ def list(collection: str) -> Response:
         if search and search not in value.decode():
             continue
 
-        prefix_length = len(collection) + 1
+        prefix_length: int = len(collection) + 1
         key: str = prefix_key.decode()[prefix_length:]
         id: str = key.split(':')[0]
 
@@ -39,10 +39,12 @@ def list(collection: str) -> Response:
             if len(key) > len(id) and ':' in key:
                 if not id in items:
                     items[id] = {}
+                elif type(items[id]) is str:
+                    items[key] = value.decode()
+                    continue
 
-                prop = key.split(':')[1]
+                prop: str = key.split(':')[1]
                 items[id][prop] = value.decode()
-
             else:
                 items[id] = value.decode()
 
@@ -51,11 +53,15 @@ def list(collection: str) -> Response:
 @app.post('/<collection>')
 def create(collection: str) -> Response:
     key: str = collection + ':' + str(uuid4())
+    data_string: str = request.get_data(as_text=True)
     db.put(('_collections:' + collection).encode(), collection.encode())
+
 
     if request.json:
         data: Optional[str] = json.dumps(request.json)
         db.put(key.encode(), data.encode())
+    elif '=' not in data_string:
+        db.put(key.encode(), data_string.encode())
     else:
         for arg in request.form:
             data: Optional[str] = request.form.get(arg)
@@ -69,7 +75,10 @@ def read(collection: str, id: str) -> Response:
     data: bytes = db.get(key.encode())
 
     if data:
-        return json.loads(data.decode())
+        try:
+            return json.loads(data.decode())
+        except:
+            return Response(data.decode())
     else:
         items: dict[str, str] = {}
 
@@ -82,11 +91,15 @@ def read(collection: str, id: str) -> Response:
 @app.put('/<collection>/<id>')
 def update(collection: str, id: str) -> Response:
     key: str = collection + ':' + id
+    data_string: str = request.get_data(as_text=True)
 
     if request.json:
         data: Optional[str] = str(request.json)
         db.put(key.encode(), data.encode())
+    elif '=' not in data_string:
+        db.put(key.encode(), data_string.encode())
     else:
+        db.delete(key.encode())
         for arg in request.form:
             data: Optional[str] = request.form.get(arg)
             db.put((key + ':' + arg).encode(), data.encode())
