@@ -25,22 +25,19 @@ def read(collection, id):
 def write(collection = None, body = Body(None)):
     body['id'] = str(uuid4())
     key = collection + '/' + body['id'] if collection else body['id']
-    db.put(key.encode(), json.dumps(body).encode())
-    return
+    return db.put(key.encode(), json.dumps(body).encode())
 
 @app.put('/{id}')
 @app.put('/{collection}/{id}')
 def update(id, collection = None, body = Body(None)):
     key = collection + '/' + id if collection else id
-    db.put(key.encode(), json.dumps(body).encode())
-    return
+    return db.put(key.encode(), json.dumps(body).encode())
 
 @app.delete('/{id}')
 @app.delete('/{collection}/{id}')
 def delete(id, collection = None):
     key = collection + '/' + id if collection else id
-    db.delete(key.encode())
-    return
+    return db.delete(key.encode())
 
 if __name__ == '__main__':
     run('__main__:app')
