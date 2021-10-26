@@ -13,8 +13,9 @@ def root():
 
 @app.get('/{collection}')
 def list(collection):
-    return [json.loads(value.decode())
-            for _, value in db.iterator(prefix=(collection + '/').encode())]
+    item = db.get(collection.encode())
+    return json.loads(item) if item else [json.loads(value.decode())
+      for _, value in db.iterator(prefix=(collection + '/').encode())]
 
 @app.get('/{collection}/{id}')
 def read(collection, id):
