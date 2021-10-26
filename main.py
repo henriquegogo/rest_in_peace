@@ -13,7 +13,7 @@ def root():
 
 @app.get('/{prefix}')
 def list(prefix):
-    return [json.loads(value.decode()) for _, value in db.iterator(prefix=prefix.encode())]
+    return [json.loads(value.decode()) for _, value in db.iterator(prefix=(prefix + '/').encode())]
 
 @app.get('/{prefix}/{id}')
 def read(prefix, id):

@@ -43,7 +43,7 @@ DELETE /<collection>/<id>
 ```
 
 ## Next steps
-- List unique ids
+- Auth
 
 # License
 MIT
