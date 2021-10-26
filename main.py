@@ -11,33 +11,34 @@ app: FastAPI = FastAPI()
 def root():
     return [key.decode() for key, _ in db.iterator()]
 
-@app.get('/{prefix}')
-def list(prefix):
-    return [json.loads(value.decode()) for _, value in db.iterator(prefix=(prefix + '/').encode())]
+@app.get('/{collection}')
+def list(collection):
+    return [json.loads(value.decode())
+            for _, value in db.iterator(collection=(collection + '/').encode())]
 
-@app.get('/{prefix}/{id}')
-def read(prefix, id):
-    return json.loads(db.get((prefix + '/' + id).encode()))
+@app.get('/{collection}/{id}')
+def read(collection, id):
+    return json.loads(db.get((collection + '/' + id).encode()))
 
 @app.post('/')
-@app.post('/{prefix}')
-def write(prefix = None, body = Body(None)):
+@app.post('/{collection}')
+def write(collection = None, body = Body(None)):
     body['id'] = str(uuid4())
-    key = prefix + '/' + body['id'] if prefix else body['id']
+    key = collection + '/' + body['id'] if collection else body['id']
     db.put(key.encode(), json.dumps(body).encode())
     return
 
 @app.put('/{id}')
-@app.put('/{prefix}/{id}')
-def update(id, prefix = None, body = Body(None)):
-    key = prefix + '/' + id if prefix else id
+@app.put('/{collection}/{id}')
+def update(id, collection = None, body = Body(None)):
+    key = collection + '/' + id if collection else id
     db.put(key.encode(), json.dumps(body).encode())
     return
 
 @app.delete('/{id}')
-@app.delete('/{prefix}/{id}')
-def delete(id, prefix = None):
-    key = prefix + '/' + id if prefix else id
+@app.delete('/{collection}/{id}')
+def delete(id, collection = None):
+    key = collection + '/' + id if collection else id
     db.delete(key.encode())
     return
 
