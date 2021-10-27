@@ -5,39 +5,37 @@ from uuid import uuid4
 import json
 
 db = DB('database', create_if_missing=True)
-app: FastAPI = FastAPI()
+app = FastAPI()
 
 @app.get('/')
-def root():
-    return [key.decode() for key, _ in db.iterator()]
+def root(limit: int = 10, offset: int = 0):
+    return [key.decode() for key, _ in db][offset:offset+limit]
 
 @app.get('/{collection}')
-def list(collection):
-    item = db.get(collection.encode())
-    return json.loads(item) if item else [json.loads(value.decode())
-      for _, value in db.iterator(prefix=(collection + '/').encode())]
+def list(collection: str, limit: int = 10, offset: int = 0):
+    return [json.loads(value.decode())
+            for _, value in db.iterator(prefix=(collection + '/').encode())
+            ][offset:offset+limit]
 
 @app.get('/{collection}/{id}')
-def read(collection, id):
+def read(collection: str, id: str):
     return json.loads(db.get((collection + '/' + id).encode()))
 
-@app.post('/')
 @app.post('/{collection}')
-def write(collection = None, body = Body(None)):
+def write(collection: str, body: dict = Body(None)):
     body['id'] = str(uuid4())
-    key = collection + '/' + body['id'] if collection else body['id']
+    key = collection + '/' + body['id']
     return db.put(key.encode(), json.dumps(body).encode())
 
-@app.put('/{id}')
 @app.put('/{collection}/{id}')
-def update(id, collection = None, body = Body(None)):
-    key = collection + '/' + id if collection else id
+@app.post('/{collection}/{id}')
+def update(collection: str, id: str, body: dict = Body(None)):
+    key = collection + '/' + id
     return db.put(key.encode(), json.dumps(body).encode())
 
-@app.delete('/{id}')
 @app.delete('/{collection}/{id}')
-def delete(id, collection = None):
-    key = collection + '/' + id if collection else id
+def delete(collection: str, id: str):
+    key = collection + '/' + id
     return db.delete(key.encode())
 
 if __name__ == '__main__':
