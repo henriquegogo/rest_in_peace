@@ -17,18 +17,17 @@ def list(collection: str, limit: int = 10, offset: int = 0):
             for _, value in db.iterator(prefix=(collection + '/').encode())
             ][offset:offset+limit]
 
-@app.get('/{collection}/{id}')
-def read(collection: str, id: str):
-    return json.loads(db.get((collection + '/' + id).encode()))
-
 @app.post('/{collection}')
-def write(collection: str, body: dict = Body(None)):
+def create(collection: str, body: dict = Body(None)):
     body['id'] = str(uuid4())
     key = collection + '/' + body['id']
     return db.put(key.encode(), json.dumps(body).encode())
 
+@app.get('/{collection}/{id}')
+def read(collection: str, id: str):
+    return json.loads(db.get((collection + '/' + id).encode()))
+
 @app.put('/{collection}/{id}')
-@app.post('/{collection}/{id}')
 def update(collection: str, id: str, body: dict = Body(None)):
     key = collection + '/' + id
     return db.put(key.encode(), json.dumps(body).encode())
