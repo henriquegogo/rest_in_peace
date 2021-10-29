@@ -5,6 +5,13 @@ import sqlite3
 db_path = 'database.db'
 app = FastAPI()
 
+def column_type(value):
+    try:
+        int(value)
+        return 'INTEGER'
+    except:
+        return 'TEXT'
+
 @app.get('/')
 def root():
     db = sqlite3.connect(db_path).cursor()
@@ -25,7 +32,7 @@ def create(collection: str, body: dict = Body(None)):
     db = connection.cursor()
     try: db.execute(f'CREATE TABLE {collection} (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE)')
     except: pass
-    try: [db.execute(f'ALTER TABLE {collection} ADD COLUMN {key} TEXT') for key in body.keys()]
+    try: [db.execute(f'ALTER TABLE {collection} ADD COLUMN {key} {column_type(value)}') for key, value in body.items()]
     except: pass
     try:
         keys = ', '.join([key for key in body.keys()])
@@ -48,10 +55,6 @@ def read(collection: str, id: str):
 def update(collection: str, id: str, body: dict = Body(None)):
     connection = sqlite3.connect(db_path)
     db = connection.cursor()
-    try: db.execute(f'CREATE TABLE {collection} (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE)')
-    except: pass
-    try: [db.execute(f'ALTER TABLE {collection} ADD COLUMN {key} TEXT') for key in body.keys()]
-    except: pass
     try:
         [db.execute(f'UPDATE {collection} SET {key} = "{value}" WHERE id = ?', id) for key, value in body.items()]
         connection.commit()
