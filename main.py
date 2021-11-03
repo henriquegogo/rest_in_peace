@@ -1,6 +1,53 @@
-from fastapi import Body, FastAPI, HTTPException
-from uvicorn import run # type: ignore
-import sqlite3
+from wsgiref.simple_server import make_server
+from urllib.parse import parse_qsl
+import sqlite3, json
+
+class Server:
+    port = 8000
+
+    routes = []
+
+    def post(self, route):
+        def wrapper(func): self.routes.append(('POST', route, func))
+        return wrapper
+
+    def get(self, route):
+        def wrapper(func): self.routes.append(('GET', route, func))
+        return wrapper
+
+    def put(self, route):
+        def wrapper(func): self.routes.append(('PUT', route, func))
+        return wrapper
+
+    def delete(self, route):
+        def wrapper(func): self.routes.append(('DELETE', route, func))
+        return wrapper
+
+    def run(self):
+        def server(env, res):
+            req_path, req_method = env['PATH_INFO'], env['REQUEST_METHOD']
+            res_code, res_body = '404 Not Found', ''
+            path_items = [item for item in req_path.split('/')[1:] if item]
+
+            for method, route, func in self.routes:
+                route_items = [item for item in route.split('/')[1:] if item]
+
+                if method == req_method and len(path_items) == len(route_items):
+                    post_data = [
+                        json.loads(env['wsgi.input'].read(int(env['CONTENT_LENGTH'])).decode())
+                    ] if env['CONTENT_LENGTH'] else []
+                    query_string = [dict(parse_qsl(env['QUERY_STRING']))] if env['QUERY_STRING'] else []
+                    try:
+                        res_body = json.dumps(func(*path_items, *post_data, *query_string))
+                        res_code = '200 OK'
+                    except: pass
+
+            res(res_code, [('Content-type', 'text/plain; charset=utf-8')])
+            return [res_body.encode()]
+
+        with make_server('', self.port, server) as httpd:
+            print(f'Serving on port {self.port}...')
+            httpd.serve_forever()
 
 class Database:
     db_path = 'database.db'
@@ -17,7 +64,7 @@ class Database:
 
     def list(self, collection: str):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
-        return [zip(schema, row) for row in self.execute(f'SELECT * FROM {collection}')]
+        return [dict(zip(schema, row)) for row in self.execute(f'SELECT * FROM {collection}')]
 
     def create(self, collection: str, body: dict):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
@@ -33,7 +80,7 @@ class Database:
 
     def read(self, collection: str, id: str):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
-        return [zip(schema, row) for row in self.execute(f'SELECT * FROM {collection} WHERE id = ? LIMIT 1', id)][0]
+        return [dict(zip(schema, row)) for row in self.execute(f'SELECT * FROM {collection} WHERE id = ? LIMIT 1', id)][0]
 
     def update(self, collection: str, id: str, body: dict):
         for key, value in body.items(): self.execute(f'UPDATE {collection} SET {key} = "{value}" WHERE id = ?', id)
@@ -44,7 +91,7 @@ class Database:
         self.execute(f'DELETE FROM {collection} WHERE id = ?', id)
         self.commit()
 
-app = FastAPI()
+app = Server()
 
 @app.get('/')
 def root():
@@ -52,30 +99,23 @@ def root():
 
 @app.get('/{collection}')
 def list(collection: str):
-    try: return Database().list(collection)
-    except: raise HTTPException(status_code=404)
+    return Database().list(collection)
 
 @app.post('/{collection}')
-def create(collection: str, body: dict = Body(None)):
-    try: return Database().create(collection, body)
-    except: raise HTTPException(status_code=400)
+def create(collection: str, body: dict):
+    return Database().create(collection, body)
 
 @app.get('/{collection}/{id}')
 def read(collection: str, id: str):
-    try: return Database().read(collection, id)
-    except: raise HTTPException(status_code=404)
+    return Database().read(collection, id)
 
 @app.put('/{collection}/{id}')
-def update(collection: str, id: str, body: dict = Body(None)):
-    try: return Database().update(collection, id, body)
-    except: raise HTTPException(status_code=400)
+def update(collection: str, id: str, body: dict):
+    return Database().update(collection, id, body)
 
 @app.delete('/{collection}/{id}')
 def delete(collection: str, id: str):
-    try:
-        Database().delete(collection, id)
-        return HTTPException(status_code=200)
-    except: raise HTTPException(status_code=404)
+    Database().delete(collection, id)
 
 if __name__ == '__main__':
-    run('__main__:app')
+    app.run()
