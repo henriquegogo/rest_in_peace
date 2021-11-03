@@ -37,6 +37,7 @@ class Server:
                         json.loads(env['wsgi.input'].read(int(env['CONTENT_LENGTH'])).decode())
                     ] if env['CONTENT_LENGTH'] else []
                     query_string = [dict(parse_qsl(env['QUERY_STRING']))] if env['QUERY_STRING'] else []
+
                     try:
                         res_body = json.dumps(func(*path_items, *post_data, *query_string))
                         res_code = '200 OK'
@@ -69,13 +70,17 @@ class Database:
     def create(self, collection: str, body: dict):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
         if not len(schema): self.execute(f'CREATE TABLE {collection} (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE)')
+
         for key, value in body.items():
             column_type = 'INTEGER' if isinstance(value, int) else 'REAL' if isinstance(value, float) else 'TEXT'
             if key not in schema: self.execute(f'ALTER TABLE {collection} ADD COLUMN {key} {column_type}')
+
         keys = ', '.join([key for key in body.keys()])
         values = str([value for value in body.values()])[1:-1]
+
         self.execute(f'INSERT INTO {collection} ({keys}) VALUES ({values})')
         self.commit()
+
         return self.read(collection, str(self.cursor.lastrowid))
 
     def read(self, collection: str, id: str):
