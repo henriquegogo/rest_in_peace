@@ -25,14 +25,13 @@ class Server:
 
     def run(self):
         def server(env, res):
-            req_path, req_method = env['PATH_INFO'], env['REQUEST_METHOD']
             res_code, res_body = '404 Not Found', ''
-            path_items = [item for item in req_path.split('/')[1:] if item]
+            path_items = [item for item in env['PATH_INFO'].split('/')[1:] if item]
 
             for method, route, func in self.routes:
                 route_items = [item for item in route.split('/')[1:] if item]
 
-                if method == req_method and len(path_items) == len(route_items):
+                if method == env['REQUEST_METHOD'] and len(path_items) == len(route_items):
                     post_data = [
                         json.loads(env['wsgi.input'].read(int(env['CONTENT_LENGTH'])).decode())
                     ] if env['CONTENT_LENGTH'] else []
