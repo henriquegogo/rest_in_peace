@@ -7,10 +7,13 @@ app = FastAPI()
 
 def column_type(value):
     try:
-        int(value)
+        int(str(value))
         return 'INTEGER'
     except:
-        return 'TEXT'
+        try:
+            float(str(value))
+            return 'REAL'
+        except: return 'TEXT'
 
 @app.get('/')
 def root():
@@ -53,13 +56,12 @@ def read(collection: str, id: str):
         return [zip(schema, row) for row in db.execute(f'SELECT * FROM {collection} WHERE id = ?', id)][0]
     except: raise HTTPException(status_code=404)
 
-#WIP
 @app.put('/{collection}/{id}')
 def update(collection: str, id: str, body: dict = Body(None)):
     connection = sqlite3.connect(db_path)
     db = connection.cursor()
     try:
-        [db.execute(f'UPDATE {collection} SET {key} = "{value}" WHERE id = ?', id) for key, value in body.items()]
+        for key, value in body.items(): db.execute(f'UPDATE {collection} SET {key} = "{value}" WHERE id = ?', id)
         connection.commit()
         return HTTPException(status_code=200)
     except: raise HTTPException(status_code=400)
