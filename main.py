@@ -11,18 +11,6 @@ class Database:
         self.execute = self.cursor.execute
         self.commit = connection.commit
 
-    @staticmethod
-    def column_type(value):
-        try:
-            int(str(value))
-            return 'INTEGER'
-        except: pass
-        try:
-            float(str(value))
-            return 'REAL'
-        except: pass
-        return 'TEXT'
-
     def tables(self):
         return [row[0] for row in
                 self.execute('SELECT name FROM sqlite_master WHERE type="table" AND name NOT LIKE "sqlite_%"')]
@@ -35,7 +23,8 @@ class Database:
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
         if not len(schema): self.execute(f'CREATE TABLE {collection} (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE)')
         for key, value in body.items():
-            if key not in schema: self.execute(f'ALTER TABLE {collection} ADD COLUMN {key} {Database.column_type(value)}')
+            column_type = 'INTEGER' if isinstance(value, int) else 'REAL' if isinstance(value, float) else 'TEXT'
+            if key not in schema: self.execute(f'ALTER TABLE {collection} ADD COLUMN {key} {column_type}')
         keys = ', '.join([key for key in body.keys()])
         values = str([value for value in body.values()])[1:-1]
         self.execute(f'INSERT INTO {collection} ({keys}) VALUES ({values})')
