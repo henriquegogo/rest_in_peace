@@ -32,13 +32,14 @@ class Server:
                 route_items = [item for item in route.split('/')[1:] if item]
 
                 if method == env['REQUEST_METHOD'] and len(path_items) == len(route_items):
+                    params = [path_items[i] for i, item in enumerate(route_items) if item[0] == '{']
                     post_data = [
                         json.loads(env['wsgi.input'].read(int(env['CONTENT_LENGTH'])).decode())
                     ] if env['CONTENT_LENGTH'] else []
                     query_string = [dict(parse_qsl(env['QUERY_STRING']))] if env['QUERY_STRING'] else []
 
                     try:
-                        res_body = json.dumps(func(*path_items, *post_data, *query_string))
+                        res_body = json.dumps(func(*params, *post_data, *query_string))
                         res_code = '200 OK'
                     except: pass
 
