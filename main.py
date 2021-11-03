@@ -32,9 +32,8 @@ class Database:
         return [zip(schema, row) for row in self.execute(f'SELECT * FROM {collection}')]
 
     def create(self, collection: str, body: dict):
-        try: self.execute(f'CREATE TABLE {collection} (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE)')
-        except: pass
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
+        if not len(schema): self.execute(f'CREATE TABLE {collection} (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE)')
         for key, value in body.items():
             if key not in schema: self.execute(f'ALTER TABLE {collection} ADD COLUMN {key} {Database.column_type(value)}')
         keys = ', '.join([key for key in body.keys()])
