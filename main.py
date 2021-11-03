@@ -33,7 +33,7 @@ class Database:
 
     def read(self, collection: str, id: str):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
-        return [zip(schema, row) for row in self.execute(f'SELECT * FROM {collection} WHERE id = ?', id)][0]
+        return [zip(schema, row) for row in self.execute(f'SELECT * FROM {collection} WHERE id = ? LIMIT 1', id)][0]
 
     def update(self, collection: str, id: str, body: dict):
         for key, value in body.items(): self.execute(f'UPDATE {collection} SET {key} = "{value}" WHERE id = ?', id)
