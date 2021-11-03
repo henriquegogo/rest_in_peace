@@ -15,11 +15,12 @@ class Database:
         try:
             int(str(value))
             return 'INTEGER'
-        except:
-            try:
-                float(str(value))
-                return 'REAL'
-            except: return 'TEXT'
+        except: pass
+        try:
+            float(str(value))
+            return 'REAL'
+        except: pass
+        return 'TEXT'
 
     def tables(self):
         return [row[0] for row in
@@ -32,11 +33,9 @@ class Database:
     def create(self, collection: str, body: dict):
         try: self.execute(f'CREATE TABLE {collection} (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE)')
         except: pass
-        try:
-            schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
-            for key, value in body.items():
-                if key not in schema: self.execute(f'ALTER TABLE {collection} ADD COLUMN {key} {Database.column_type(value)}')
-        except: pass
+        schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
+        for key, value in body.items():
+            if key not in schema: self.execute(f'ALTER TABLE {collection} ADD COLUMN {key} {Database.column_type(value)}')
         keys = ', '.join([key for key in body.keys()])
         values = str([value for value in body.values()])[1:-1]
         self.execute(f'INSERT INTO {collection} ({keys}) VALUES ({values})')
