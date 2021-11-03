@@ -7,7 +7,8 @@ class Database:
 
     def __init__(self):
         connection = sqlite3.connect(self.db_path)
-        self.execute = connection.cursor().execute
+        self.cursor = connection.cursor()
+        self.execute = self.cursor.execute
         self.commit = connection.commit
 
     @staticmethod
@@ -40,6 +41,7 @@ class Database:
         values = str([value for value in body.values()])[1:-1]
         self.execute(f'INSERT INTO {collection} ({keys}) VALUES ({values})')
         self.commit()
+        return self.read(collection, str(self.cursor.lastrowid))
 
     def read(self, collection: str, id: str):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
@@ -48,6 +50,7 @@ class Database:
     def update(self, collection: str, id: str, body: dict):
         for key, value in body.items(): self.execute(f'UPDATE {collection} SET {key} = "{value}" WHERE id = ?', id)
         self.commit()
+        return self.read(collection, id)
 
     def delete(self, collection: str, id: str):
         self.execute(f'DELETE FROM {collection} WHERE id = ?', id)
@@ -66,9 +69,7 @@ def list(collection: str):
 
 @app.post('/{collection}')
 def create(collection: str, body: dict = Body(None)):
-    try:
-        Database().create(collection, body)
-        return HTTPException(status_code=201)
+    try: return Database().create(collection, body)
     except: raise HTTPException(status_code=400)
 
 @app.get('/{collection}/{id}')
@@ -78,9 +79,7 @@ def read(collection: str, id: str):
 
 @app.put('/{collection}/{id}')
 def update(collection: str, id: str, body: dict = Body(None)):
-    try:
-        Database().update(collection, id, body)
-        return HTTPException(status_code=200)
+    try: return Database().update(collection, id, body)
     except: raise HTTPException(status_code=400)
 
 @app.delete('/{collection}/{id}')
