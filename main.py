@@ -32,12 +32,15 @@ def create(collection: str, body: dict = Body(None)):
     db = connection.cursor()
     try: db.execute(f'CREATE TABLE {collection} (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE)')
     except: pass
-    try: [db.execute(f'ALTER TABLE {collection} ADD COLUMN {key} {column_type(value)}') for key, value in body.items()]
+    try:
+        schema = [row[1] for row in db.execute(f'PRAGMA table_info({collection})')]
+        for key, value in body.items():
+            if key not in schema: db.execute(f'ALTER TABLE {collection} ADD COLUMN {key} {column_type(value)}')
     except: pass
     try:
         keys = ', '.join([key for key in body.keys()])
-        values = str(tuple([value for value in body.values()]))
-        db.execute(f'INSERT INTO {collection} ({keys}) VALUES {values}')
+        values = str([value for value in body.values()])[1:-1]
+        db.execute(f'INSERT INTO {collection} ({keys}) VALUES ({values})')
         connection.commit()
         return HTTPException(status_code=201)
     except: raise HTTPException(status_code=400)
