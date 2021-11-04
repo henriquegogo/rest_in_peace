@@ -59,9 +59,17 @@ class Database:
         self.execute = self.cursor.execute
         self.commit = connection.commit
 
-    def tables(self):
-        return [row[0] for row in
-                self.execute('SELECT name FROM sqlite_master WHERE type="table" AND name NOT LIKE "sqlite_%"')]
+    def schema(self):
+        result = {}
+
+        for table in [row[0] for row in
+                      self.execute('SELECT name FROM sqlite_master WHERE type="table" AND name NOT LIKE "sqlite_%"')]:
+            result[table] = {}
+
+            for row in self.execute(f'PRAGMA table_info({table})'):
+                result[table][row[1]] = row[2]
+
+        return result
 
     def list(self, collection: str):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
@@ -69,7 +77,8 @@ class Database:
 
     def create(self, collection: str, body: dict):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
-        if not len(schema): self.execute(f'CREATE TABLE {collection} (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE)')
+        if not len(schema):
+            self.execute(f'CREATE TABLE {collection} (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE)')
 
         for key, value in body.items():
             column_type = 'INTEGER' if isinstance(value, int) else 'REAL' if isinstance(value, float) else 'TEXT'
@@ -85,7 +94,8 @@ class Database:
 
     def read(self, collection: str, id: str):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
-        return [dict(zip(schema, row)) for row in self.execute(f'SELECT * FROM {collection} WHERE id = ? LIMIT 1', id)][0]
+        return [dict(zip(schema, row)) for row in
+                self.execute(f'SELECT * FROM {collection} WHERE id = ? LIMIT 1', id)][0]
 
     def update(self, collection: str, id: str, body: dict):
         for key, value in body.items(): self.execute(f'UPDATE {collection} SET {key} = "{value}" WHERE id = ?', id)
@@ -99,8 +109,8 @@ class Database:
 app = Server()
 
 @app.get('/')
-def root():
-    return Database().tables()
+def schema():
+    return Database().schema()
 
 @app.get('/{collection}')
 def list(collection: str):
