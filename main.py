@@ -1,8 +1,9 @@
-from wsgiref.simple_server import make_server
+from wsgiref import simple_server, util
 from urllib.parse import parse_qsl
-import sqlite3, json
+import os, mimetypes, sqlite3, json
 
 class Server:
+    host = ''
     port = 8000
 
     routes = []
@@ -24,8 +25,17 @@ class Server:
         return wrapper
 
     def run(self):
+        def serve_static(env, res):
+            static_folder = 'public' + env['PATH_INFO']
+
+            if '.' in static_folder and os.path.exists(static_folder):
+                res('200 OK', [('Content-Type', mimetypes.guess_type(static_folder)[0])])
+                return util.FileWrapper(open(static_folder, "rb"))
+            else:
+                res('404 Not Found', [('Content-Type', 'text/plain')])
+                return ''
+
         def server(env, res):
-            res_code, res_body = '404 Not Found', ''
             path_items = [item for item in env['PATH_INFO'].split('/')[1:] if item]
 
             for method, route, func in self.routes:
@@ -40,14 +50,14 @@ class Server:
 
                     try:
                         res_body = json.dumps(func(*params, *post_data, *query_string))
-                        res_code = '200 OK'
+                        res('200 OK', [('Content-type', 'application/json; charset=utf-8')])
+                        return [res_body.encode()]
                     except: pass
 
-            res(res_code, [('Content-type', 'text/plain; charset=utf-8')])
-            return [res_body.encode()]
+            return serve_static(env, res)
 
-        with make_server('', self.port, server) as httpd:
-            print(f'INFO: Application running on :{self.port} (Press CTRL+C to quit)')
+        with simple_server.make_server(self.host, self.port, server) as httpd:
+            print(f'INFO: Application running on {self.host}:{self.port} (Press CTRL+C to quit)')
             httpd.serve_forever()
 
 class Database:
