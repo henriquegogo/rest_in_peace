@@ -47,7 +47,7 @@ class Server:
             return [res_body.encode()]
 
         with make_server('', self.port, server) as httpd:
-            print(f'Serving on port {self.port}...')
+            print(f'INFO: Application running on :{self.port} (Press CTRL+C to quit)')
             httpd.serve_forever()
 
 class Database:
