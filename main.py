@@ -3,24 +3,27 @@ from urllib.parse import parse_qsl
 import os, mimetypes, sqlite3, json
 
 class Server:
-    host = ''
-    port = 8000
-
+    host: str
+    port: int
     routes = []
 
-    def post(self, route):
+    def __init__(self, host: str = '', port: int = 8000):
+        self.host = host
+        self.port = port
+
+    def post(self, route: str):
         def wrapper(func): self.routes.append(('POST', route, func))
         return wrapper
 
-    def get(self, route):
+    def get(self, route: str):
         def wrapper(func): self.routes.append(('GET', route, func))
         return wrapper
 
-    def put(self, route):
+    def put(self, route: str):
         def wrapper(func): self.routes.append(('PUT', route, func))
         return wrapper
 
-    def delete(self, route):
+    def delete(self, route: str):
         def wrapper(func): self.routes.append(('DELETE', route, func))
         return wrapper
 
@@ -61,10 +64,8 @@ class Server:
             httpd.serve_forever()
 
 class Database:
-    db_path = 'database.db'
-
-    def __init__(self):
-        connection = sqlite3.connect(self.db_path)
+    def __init__(self, db_path: str = 'database.db'):
+        connection = sqlite3.connect(db_path)
         self.cursor = connection.cursor()
         self.execute = self.cursor.execute
         self.commit = connection.commit
