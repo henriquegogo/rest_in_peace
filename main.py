@@ -118,30 +118,31 @@ class Database:
         self.commit()
 
 app = Server()
+db = Database()
 
 @app.get('/')
 def schema():
-    return Database().schema()
+    return db.schema()
 
 @app.get('/{collection}')
 def list(collection: str):
-    return Database().list(collection)
+    return db.list(collection)
 
 @app.post('/{collection}')
 def create(collection: str, body: dict):
-    return Database().create(collection, body)
+    return db.create(collection, body)
 
 @app.get('/{collection}/{id}')
 def read(collection: str, id: str):
-    return Database().read(collection, id)
+    return db.read(collection, id)
 
 @app.put('/{collection}/{id}')
 def update(collection: str, id: str, body: dict):
-    return Database().update(collection, id, body)
+    return db.update(collection, id, body)
 
 @app.delete('/{collection}/{id}')
 def delete(collection: str, id: str):
-    Database().delete(collection, id)
+    db.delete(collection, id)
 
 if __name__ == '__main__':
     app.run()
