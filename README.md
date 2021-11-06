@@ -3,47 +3,47 @@
 ## What is?
 Is a database abstraction to use as a REST API with zero config.
 
-## How to install and use
-(Not published yet)
+## How to use
 ```
-pip install dadada
+python main.py
 ```
 
 ## Routes
-Return all collections
+Return schema
 ```
 GET /
 ```
 
 Return all items from collection
 ```
-GET /<collection>
+GET /{collection}
 ```
 
 Get a specific item
 ```
-GET /<collection>/<id>
+GET /{collection}/{id}
 ```
 
 Create an item
 ```
-POST /<collection>/<id>
+POST /{collection}/{id}
 DATA 'Data'
 ```
 
 Update an item
 ```
-PUT /<collection>/<id>
+PUT /{collection}/{id}
 DATA 'Data'
 ```
 
 Delete an item
 ```
-DELETE /<collection>/<id>
+DELETE /{collection}/{id}
 ```
 
 ## Next steps
 - Auth
+- Router improvements
 
 # License
 MIT

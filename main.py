@@ -6,7 +6,6 @@ db = Database()
 
 @app.get('/')
 def schema(params: dict = {}):
-    print(params)
     return db.schema()
 
 @app.get('/{collection}')
