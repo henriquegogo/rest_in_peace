@@ -5,11 +5,12 @@ app = Server()
 db = Database()
 
 @app.get('/')
-def schema():
+def schema(params: dict = {}):
+    print(params)
     return db.schema()
 
 @app.get('/{collection}')
-def list(collection: str):
+def list(collection: str, params: dict = {}):
     return db.list(collection)
 
 @app.post('/{collection}')
@@ -17,7 +18,7 @@ def create(collection: str, body: dict):
     return db.create(collection, body)
 
 @app.get('/{collection}/{id}')
-def read(collection: str, id: str):
+def read(collection: str, id: str, params: dict = {}):
     return db.read(collection, id)
 
 @app.put('/{collection}/{id}')

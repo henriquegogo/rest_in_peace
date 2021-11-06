@@ -50,11 +50,11 @@ class Server:
                         env['wsgi.input'].read(int(env['CONTENT_LENGTH'])).decode()
                     ) if env['CONTENT_LENGTH'] else {}
                     data.update(dict(parse_qsl(env['QUERY_STRING'])) if env['QUERY_STRING'] else {})
-                    if bool(data): params.append(data)
 
                     try:
-                        res_body = json.dumps(func(*params))
-                        res('200 OK', [('Content-type', 'application/json; charset=utf-8')])
+                        res_body = json.dumps(func(*params, data) if bool(data) else func(*params))
+                        res_code = '201 Created' if method == 'POST' else '200 OK'
+                        res(res_code, [('Content-type', 'application/json; charset=utf-8')])
                         return [res_body.encode()]
                     except: pass
 
