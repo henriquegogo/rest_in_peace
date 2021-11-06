@@ -49,9 +49,8 @@ class Server:
                     data = json.loads(
                         env['wsgi.input'].read(int(env['CONTENT_LENGTH'])).decode()
                     ) if env['CONTENT_LENGTH'] else {}
-                    query_string = dict(parse_qsl(env['QUERY_STRING'])) if env['QUERY_STRING'] else {}
-                    data.update(query_string)
-                    if len(data.keys()): params.append(data)
+                    data.update(dict(parse_qsl(env['QUERY_STRING'])) if env['QUERY_STRING'] else {})
+                    if bool(data): params.append(data)
 
                     try:
                         res_body = json.dumps(func(*params))
