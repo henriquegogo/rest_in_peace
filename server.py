@@ -46,10 +46,12 @@ class Server:
 
                 if method == env['REQUEST_METHOD'] and len(path_items) == len(route_items):
                     params = [path_items[i] for i, item in enumerate(route_items) if item[0] == '{']
-                    data = json.loads(
-                        env['wsgi.input'].read(int(env['CONTENT_LENGTH'])).decode()
-                    ) if env['CONTENT_LENGTH'] else {}
-                    data.update(dict(parse_qsl(env['QUERY_STRING'])) if env['QUERY_STRING'] else {})
+                    data = dict(parse_qsl(env['QUERY_STRING'])) if env['QUERY_STRING'] else {}
+
+                    if env['CONTENT_LENGTH']:
+                        body_data = env['wsgi.input'].read(int(env['CONTENT_LENGTH'])).decode()
+                        data.update(json.loads(body_data) if env['CONTENT_TYPE'] == 'application/json'
+                                    else dict(parse_qsl(body_data)))
 
                     try:
                         res_body = json.dumps(func(*params, data) if bool(data) else func(*params))
