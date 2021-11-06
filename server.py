@@ -46,13 +46,15 @@ class Server:
 
                 if method == env['REQUEST_METHOD'] and len(path_items) == len(route_items):
                     params = [path_items[i] for i, item in enumerate(route_items) if item[0] == '{']
-                    post_data = [
-                        json.loads(env['wsgi.input'].read(int(env['CONTENT_LENGTH'])).decode())
-                    ] if env['CONTENT_LENGTH'] else []
-                    query_string = [dict(parse_qsl(env['QUERY_STRING']))] if env['QUERY_STRING'] else []
+                    data = json.loads(
+                        env['wsgi.input'].read(int(env['CONTENT_LENGTH'])).decode()
+                    ) if env['CONTENT_LENGTH'] else {}
+                    query_string = dict(parse_qsl(env['QUERY_STRING'])) if env['QUERY_STRING'] else {}
+                    data.update(query_string)
+                    if len(data.keys()): params.append(data)
 
                     try:
-                        res_body = json.dumps(func(*params, *post_data, *query_string))
+                        res_body = json.dumps(func(*params))
                         res('200 OK', [('Content-type', 'application/json; charset=utf-8')])
                         return [res_body.encode()]
                     except: pass
