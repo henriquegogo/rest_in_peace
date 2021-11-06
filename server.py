@@ -35,7 +35,7 @@ class Server:
                 res('200 OK', [('Content-Type', mimetypes.guess_type(static_folder)[0])])
                 return util.FileWrapper(open(static_folder, "rb"))
             else:
-                res('404 Not Found', [('Content-Type', 'text/plain')])
+                res('404 Not Found', [])
                 return ''
 
         def server(env, res):
@@ -44,7 +44,7 @@ class Server:
             for method, route, func in self.routes:
                 route_items = [item for item in route.split('/')[1:] if item]
 
-                if method == env['REQUEST_METHOD'] and len(path_items) == len(route_items):
+                if method == env['REQUEST_METHOD'] and len(path_items) == len(route_items) and not '.' in env['PATH_INFO']:
                     params = [path_items[i] for i, item in enumerate(route_items) if item[0] == '{']
                     data = dict(parse_qsl(env['QUERY_STRING'])) if env['QUERY_STRING'] else {}
 
@@ -58,7 +58,9 @@ class Server:
                         res_code = '201 Created' if method == 'POST' else '200 OK'
                         res(res_code, [('Content-type', 'application/json; charset=utf-8')])
                         return [res_body.encode()]
-                    except: pass
+                    except:
+                        res('400 Bad Request', [])
+                        return ''
 
             return serve_static(env, res)
 
