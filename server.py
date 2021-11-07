@@ -29,12 +29,9 @@ class Server:
 
     def run(self):
         def serve_static(env, res):
-            static_folder = 'public' + env['PATH_INFO']
+            static_folder = 'public' + ('/index.html' if env['PATH_INFO'] == '/' else env['PATH_INFO'])
 
-            if env['REQUEST_METHOD'] != 'GET':
-                res('400 Bad Request', [])
-                return ''
-            elif '.' in static_folder and os.path.exists(static_folder):
+            if '.' in static_folder and os.path.exists(static_folder):
                 res('200 OK', [('Content-Type', mimetypes.guess_type(static_folder)[0])])
                 return util.FileWrapper(open(static_folder, "rb"))
             else:
@@ -47,7 +44,8 @@ class Server:
             for method, route, func in self.routes:
                 route_items = [item for item in route.split('/')[1:] if item]
 
-                if method == env['REQUEST_METHOD'] and len(path_items) == len(route_items):
+                if method == env['REQUEST_METHOD'] and len(path_items) == len(route_items) and all(
+                        [path_items[i] == item or item[0] == '{' for i, item in enumerate(route_items)]):
                     params = [path_items[i] for i, item in enumerate(route_items) if item[0] == '{']
                     data = dict(parse_qsl(env['QUERY_STRING'])) if env['QUERY_STRING'] else {}
 
@@ -63,7 +61,11 @@ class Server:
                         return [res_body.encode()]
                     except: pass
 
-            return serve_static(env, res)
+            if env['REQUEST_METHOD'] != 'GET':
+                res('400 Bad Request', [])
+                return ''
+            else:
+                return serve_static(env, res)
 
         with simple_server.make_server(self.host, self.port, server) as httpd:
             print(f'INFO: Application running on {self.host}:{self.port} (Press CTRL+C to quit)')

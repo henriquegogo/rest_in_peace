@@ -9,9 +9,14 @@ python main.py
 ```
 
 ## Routes
-Return schema
+Static server. Return 'public/index.html'
 ```
 GET /
+```
+
+Return schema
+```
+GET /schema.json
 ```
 
 Return all items from collection
@@ -43,7 +48,6 @@ DELETE /{collection}/{id}
 
 ## Next steps
 - Auth
-- Router improvements
 
 # License
 MIT

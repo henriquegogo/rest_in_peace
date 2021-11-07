@@ -4,7 +4,7 @@ from database import Database
 app = Server()
 db = Database()
 
-@app.get('/')
+@app.get('/schema.json')
 def schema(params: dict = {}):
     return db.schema()
 
