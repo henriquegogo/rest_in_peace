@@ -12,20 +12,16 @@ class Server:
         self.port = port
 
     def post(self, route: str):
-        def wrapper(func): self.routes.append(('POST', route, func))
-        return wrapper
+        return lambda func: self.routes.append(('POST', route, func))
 
     def get(self, route: str):
-        def wrapper(func): self.routes.append(('GET', route, func))
-        return wrapper
+        return lambda func: self.routes.append(('GET', route, func))
 
     def put(self, route: str):
-        def wrapper(func): self.routes.append(('PUT', route, func))
-        return wrapper
+        return lambda func: self.routes.append(('PUT', route, func))
 
     def delete(self, route: str):
-        def wrapper(func): self.routes.append(('DELETE', route, func))
-        return wrapper
+        return lambda func: self.routes.append(('DELETE', route, func))
 
     def run(self):
         def serve_static(env, res):
@@ -34,6 +30,9 @@ class Server:
             if '.' in static_folder and os.path.exists(static_folder):
                 res('200 OK', [('Content-Type', mimetypes.guess_type(static_folder)[0])])
                 return util.FileWrapper(open(static_folder, "rb"))
+            elif env['PATH_INFO'] == '/':
+                res('302 Found', [('Location', '/schema.json')])
+                return ''
             else:
                 res('404 Not Found', [])
                 return ''
