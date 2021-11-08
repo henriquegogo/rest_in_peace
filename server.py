@@ -55,7 +55,9 @@ class Server:
 
                     try:
                         res_body = json.dumps(func(*params, data) if bool(data) else func(*params))
-                        res_code = '201 Created' if method == 'POST' else '200 OK'
+                        res_code = '201 Created' if method == 'POST' else \
+                            '204 No Content' if method == 'DELETE' else \
+                            '200 OK'
                         res(res_code, [('Content-type', 'application/json; charset=utf-8')])
                         return [res_body.encode()]
                     except: pass
