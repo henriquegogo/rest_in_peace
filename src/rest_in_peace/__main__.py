@@ -1,6 +1,6 @@
 from sys import argv
-from database import Database
-from server import Server
+from .database import Database
+from .server import Server
 
 db = Database(argv[1] if len(argv) > 1 else 'database.db')
 app = Server(int(argv[2]) if len(argv) > 2 else 8000)
@@ -29,5 +29,8 @@ def update(collection: str, id: str, body: dict):
 def delete(collection: str, id: str):
     db.delete(collection, id)
 
-if __name__ == '__main__':
+def main():
     app.run()
+
+if __name__ == '__main__':
+    main()
