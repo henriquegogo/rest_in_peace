@@ -21,10 +21,15 @@ class Database:
 
     def list(self, collection: str, params: dict):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
-        limit = params['limit'] if 'limit' in params else 10
-        offset = params['offset'] if 'offset' in params else 0
+        where = ' AND '.join([f'{key}="{params[key]}"' for key in params.keys()
+                              if key not in ['orderby', 'limit', 'offset']])
+
         return [dict(zip(schema, row)) for row in
-                self.execute(f'SELECT * FROM {collection} LIMIT {limit} OFFSET {offset}')]
+                self.execute(f'SELECT * FROM {collection} \
+                             WHERE {where if where else "TRUE"} \
+                             ORDER BY {params["orderby"] if "orderby" in params else "id ASC"} \
+                             LIMIT {params["limit"] if "limit" in params else 10} \
+                             OFFSET {params["offset"] if "offset" in params else 0}')]
 
     def create(self, collection: str, body: dict):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
