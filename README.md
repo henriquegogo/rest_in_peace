@@ -1,4 +1,4 @@
-# Da-Da-Da (Database API)
+# Da-Da (Database API)
 
 ## What is?
 Is a database abstraction to use as a REST API with zero config.
