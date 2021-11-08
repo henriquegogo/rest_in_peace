@@ -1,8 +1,9 @@
-from server import Server
+from sys import argv
 from database import Database
+from server import Server
 
-app = Server()
-db = Database()
+db = Database(argv[1] if len(argv) > 1 else 'database.db')
+app = Server(int(argv[2]) if len(argv) > 2 else 8000)
 
 @app.get('/schema.json')
 def schema():

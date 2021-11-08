@@ -7,8 +7,8 @@ class Server:
     port: int
     routes = []
 
-    def __init__(self, host: str = '', port: int = 8000):
-        self.host = host
+    def __init__(self, port: int = 8000):
+        self.host = ''
         self.port = port
 
     def post(self, route: str):

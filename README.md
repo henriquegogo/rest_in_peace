@@ -1,11 +1,12 @@
-# Da-Da (Database API)
+# Rest-In-Peace (Database API)
 
 ## What is?
 Is a database abstraction to use as a REST API with zero config.
 
 ## How to use
 ```
-python main.py
+$ pip install rest-in-peace
+$ rest-in-peace database.db 8000
 ```
 
 ## Routes
