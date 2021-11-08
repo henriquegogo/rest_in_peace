@@ -19,9 +19,12 @@ class Database:
 
         return result
 
-    def list(self, collection: str):
+    def list(self, collection: str, params: dict):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
-        return [dict(zip(schema, row)) for row in self.execute(f'SELECT * FROM {collection}')]
+        limit = params['limit'] if 'limit' in params else 10
+        offset = params['offset'] if 'offset' in params else 0
+        return [dict(zip(schema, row)) for row in
+                self.execute(f'SELECT * FROM {collection} LIMIT {limit} OFFSET {offset}')]
 
     def create(self, collection: str, body: dict):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
