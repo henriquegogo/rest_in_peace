@@ -8,7 +8,7 @@ app = Server(int(argv[2]) if len(argv) > 2 else 8000)
 @app.get('/openapi.json')
 def openapi():
     definitions = {
-        'definitions': '3.0.0',
+        'openapi': '3.0.0',
         'servers': [{'url': 'http://localhost:8000'}],
         'info': {'title': 'API', 'version': '1.0.0'},
         'paths': {
