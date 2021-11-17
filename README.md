@@ -1,7 +1,7 @@
 # Rest-In-Peace (Database API)
 
-## What is?
-Is a database abstraction to use as a REST API with zero config.
+## What is this?
+It's a database abstraction to use as a REST API with zero config.
 
 ## How to use
 ```
@@ -48,7 +48,9 @@ DELETE /{collection}/{id}
 ```
 
 ## Next steps
-- Auth
+- Auth / Roles
+- Dynamic / Static schema
+- SQL Injection fix
 
 # License
 MIT

@@ -17,6 +17,10 @@ def list(collection: str, params: dict = {}):
 def create(collection: str, body: dict):
     return db.create(collection, body)
 
+@app.delete('/{collection}')
+def drop(collection: str):
+    return db.drop(collection)
+
 @app.get('/{collection}/{id}')
 def read(collection: str, id: str):
     return db.read(collection, id)

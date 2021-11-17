@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="Rest-In-Peace",
-    version="0.1.1",
+    version="0.1.2",
     author="Henrique Gogó",
     author_email="henriquegogo@gmail.com",
     description="An instant and schemaless rest api with sqlite",

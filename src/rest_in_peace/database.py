@@ -19,45 +19,52 @@ class Database:
 
         return result
 
-    def list(self, collection: str, params: dict):
-        schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
+    def table(self, table: str, data: dict):
+        schema = [row[1] for row in self.execute(f'PRAGMA table_info({table})')]
+
+        if not len(schema):
+            self.execute(f'CREATE TABLE {table} (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE)')
+
+        for key, value in data.items():
+            column_type = 'INTEGER' if isinstance(value, int) else 'REAL' if isinstance(value, float) else 'TEXT'
+            if key not in schema: self.execute(f'ALTER TABLE {table} ADD COLUMN {key} {column_type}')
+
+    def drop(self, table: str):
+        self.execute(f'DROP TABLE {table}')
+
+    def list(self, table: str, params: dict):
+        schema = [row[1] for row in self.execute(f'PRAGMA table_info({table})')]
         where = ' AND '.join([f'{key}="{params[key]}"' for key in params.keys()
                               if key not in ['orderby', 'limit', 'offset']])
 
         return [dict(zip(schema, row)) for row in
-                self.execute(f'SELECT * FROM {collection} \
+                self.execute(f'SELECT * FROM {table} \
                              WHERE {where if where else "TRUE"} \
                              ORDER BY {params["orderby"] if "orderby" in params else "id ASC"} \
                              LIMIT {params["limit"] if "limit" in params else 10} \
                              OFFSET {params["offset"] if "offset" in params else 0}')]
 
-    def create(self, collection: str, body: dict):
-        schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
-        if not len(schema):
-            self.execute(f'CREATE TABLE {collection} (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE)')
-
-        for key, value in body.items():
-            column_type = 'INTEGER' if isinstance(value, int) else 'REAL' if isinstance(value, float) else 'TEXT'
-            if key not in schema: self.execute(f'ALTER TABLE {collection} ADD COLUMN {key} {column_type}')
+    def create(self, table: str, body: dict):
+        self.table(table, body)
 
         keys = ', '.join([key for key in body.keys()])
         values = str([value for value in body.values()])[1:-1]
 
-        self.execute(f'INSERT INTO {collection} ({keys}) VALUES ({values})')
+        self.execute(f'INSERT INTO {table} ({keys}) VALUES ({values})')
         self.commit()
 
-        return self.read(collection, str(self.cursor.lastrowid))
+        return self.read(table, str(self.cursor.lastrowid))
 
-    def read(self, collection: str, id: str):
-        schema = [row[1] for row in self.execute(f'PRAGMA table_info({collection})')]
+    def read(self, table: str, id: str):
+        schema = [row[1] for row in self.execute(f'PRAGMA table_info({table})')]
         return [dict(zip(schema, row)) for row in
-                self.execute(f'SELECT * FROM {collection} WHERE id = ? LIMIT 1', id)][0]
+                self.execute(f'SELECT * FROM {table} WHERE id = ? LIMIT 1', id)][0]
 
-    def update(self, collection: str, id: str, body: dict):
-        for key, value in body.items(): self.execute(f'UPDATE {collection} SET {key} = "{value}" WHERE id = ?', id)
+    def update(self, table: str, id: str, body: dict):
+        for key, value in body.items(): self.execute(f'UPDATE {table} SET {key} = "{value}" WHERE id = ?', id)
         self.commit()
-        return self.read(collection, id)
+        return self.read(table, id)
 
-    def delete(self, collection: str, id: str):
-        self.execute(f'DELETE FROM {collection} WHERE id = ?', id)
+    def delete(self, table: str, id: str):
+        self.execute(f'DELETE FROM {table} WHERE id = ?', id)
         self.commit()
