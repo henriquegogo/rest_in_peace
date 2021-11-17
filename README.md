@@ -15,9 +15,9 @@ Static server. Return 'public/index.html'
 GET /
 ```
 
-Return schema
+Return API definitions
 ```
-GET /schema.json
+GET /openapi.json
 ```
 
 Return all items from collection
