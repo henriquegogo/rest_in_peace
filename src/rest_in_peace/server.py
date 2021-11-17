@@ -47,8 +47,8 @@ class Server:
 
                     if env['CONTENT_LENGTH']:
                         body_data = env['wsgi.input'].read(int(env['CONTENT_LENGTH'])).decode()
-                        data.update(json.loads(body_data) if env['CONTENT_TYPE'] == 'application/json'
-                                    else dict(parse_qsl(body_data)))
+                        try: data.update(json.loads(body_data))
+                        except: data.update(dict(parse_qsl(body_data)))
 
                     try:
                         res_body = json.dumps(func(*params, data) if bool(data) else func(*params))
