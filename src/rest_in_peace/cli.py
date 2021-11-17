@@ -15,6 +15,7 @@ def list(collection: str, params: dict = {}):
 
 @app.post('/{collection}')
 def create(collection: str, body: dict):
+    db.table(collection, body)
     return db.create(collection, body)
 
 @app.delete('/{collection}')
