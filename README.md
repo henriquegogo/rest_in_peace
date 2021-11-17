@@ -25,6 +25,11 @@ Return all items from collection
 GET /{collection}
 ```
 
+Delete collection
+```
+DELETE /{collection}
+```
+
 Get a specific item
 ```
 GET /{collection}/{id}
