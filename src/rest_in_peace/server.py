@@ -8,7 +8,7 @@ class Server:
     routes = []
 
     def __init__(self, port: int = 8000):
-        self.host = ''
+        self.host = 'localhost'
         self.port = port
 
     def post(self, route: str):

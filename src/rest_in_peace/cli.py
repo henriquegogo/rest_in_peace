@@ -1,42 +1,14 @@
 from sys import argv
 from .database import Database
 from .server import Server
+from .openapi import openapi
 
 db = Database(argv[1] if len(argv) > 1 else 'database.db')
 app = Server(int(argv[2]) if len(argv) > 2 else 8000)
 
 @app.get('/openapi.json')
-def openapi():
-    definitions = {
-        'openapi': '3.0.0',
-        'servers': [{'url': 'http://localhost:8000'}],
-        'info': {'title': 'API', 'version': '1.0.0'},
-        'paths': {
-            '/': {'get': {'description': 'Static index.html contained in /public folder'}},
-            '/openapi.json': {'get': {'description': 'Return API definitions'}}
-        },
-        'components': {'schemas': {}}
-    }
-
-    for table, columns in db.schema().items():
-        definitions['paths'][f'/{table}'] = {
-            'get': {'description': f'Return all {table}'},
-            'post': {'description': f'Create a new item for {table} and return the created item'},
-            'delete': {'description': f'Delete all {table} structure and remove routes'}
-        }
-        definitions['paths'][f'/{table}/{{id}}'] = {
-            'get': {'description': f'Return an specific item from {table}'},
-            'put': {'description': f'Update an specific item from {table}'},
-            'delete': {'description': f'Delete an specific item from {table}'}
-        }
-        definitions['components']['schemas'][table] = {"properties": {}}
-
-        for row_name, row_type in columns.items():
-            definitions['components']['schemas'][table]["properties"][row_name] = {
-                "type": 'string' if row_type == 'TEXT' else 'NUMBER' if row_type == 'REAL' else row_type.lower()
-            }
-
-    return definitions
+def definitions():
+    return openapi(db.schema(), app.host, app.port)
 
 @app.get('/{collection}')
 def list(collection: str, params: dict = {}):
