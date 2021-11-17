@@ -13,7 +13,7 @@ def openapi():
         'info': {'title': 'API', 'version': '1.0.0'},
         'paths': {
             '/': {'get': {'description': 'Static index.html contained in /public folder'}},
-            '/definitions.json': {'get': {'description': 'Return API definitions'}}
+            '/openapi.json': {'get': {'description': 'Return API definitions'}}
         },
         'components': {'schemas': {}}
     }
