@@ -36,19 +36,19 @@ class Database:
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({table})')]
         where = ' AND '.join([f'{key}="{params[key]}"' for key in params.keys()
                               if key not in ['orderby', 'limit', 'offset']])
+        orderby = params['orderby'] if 'orderby' in params else 'id ASC'
+        limit = params['limit'] if 'limit' in params else '10'
+        offset = params['offset'] if 'offset' in params else '0'
 
         return [dict(zip(schema, row)) for row in
-                self.execute(f'SELECT * FROM {table} \
-                             WHERE {where if where else "TRUE"} \
-                             ORDER BY {params["orderby"] if "orderby" in params else "id ASC"} \
-                             LIMIT {params["limit"] if "limit" in params else 10} \
-                             OFFSET {params["offset"] if "offset" in params else 0}')]
+                self.execute(f'SELECT * FROM {table} WHERE {where if where else "TRUE"} \
+                             ORDER BY :orderby LIMIT :limit OFFSET :offset', (orderby, limit, offset))]
 
     def create(self, table: str, body: dict):
         self.table(table, body)
 
-        keys = ', '.join([key for key in body.keys()])
-        values = str([value for value in body.values()])[1:-1]
+        keys = ', '.join(list(body.keys()))
+        values = str(list(body.values()))[1:-1]
 
         self.execute(f'INSERT INTO {table} ({keys}) VALUES ({values})')
         self.commit()
@@ -58,13 +58,13 @@ class Database:
     def read(self, table: str, id: str):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({table})')]
         return [dict(zip(schema, row)) for row in
-                self.execute(f'SELECT * FROM {table} WHERE id = ? LIMIT 1', id)][0]
+                self.execute(f'SELECT * FROM {table} WHERE id = :id LIMIT 1', id)][0]
 
     def update(self, table: str, id: str, body: dict):
-        for key, value in body.items(): self.execute(f'UPDATE {table} SET {key} = "{value}" WHERE id = ?', id)
+        for key, value in body.items(): self.execute(f'UPDATE {table} SET {key} = :value WHERE id = :id', (value, id))
         self.commit()
         return self.read(table, id)
 
     def delete(self, table: str, id: str):
-        self.execute(f'DELETE FROM {table} WHERE id = ?', id)
+        self.execute(f'DELETE FROM {table} WHERE id = :id', id)
         self.commit()
