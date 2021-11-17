@@ -30,9 +30,6 @@ class Server:
             if '.' in static_folder and os.path.exists(static_folder):
                 res('200 OK', [('Content-Type', mimetypes.guess_type(static_folder)[0])])
                 return util.FileWrapper(open(static_folder, "rb"))
-            elif env['PATH_INFO'] == '/':
-                res('302 Found', [('Location', '/schema.json')])
-                return ''
             else:
                 res('404 Not Found', [])
                 return ''
