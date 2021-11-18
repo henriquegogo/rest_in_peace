@@ -10,7 +10,7 @@ $ rest-in-peace database.db 8000
 ```
 
 ## Routes
-Static server. Return 'public/index.html'
+Static server. Return 'public/index.html' (Tip: Download and use Swagger here)
 ```
 GET /
 ```
