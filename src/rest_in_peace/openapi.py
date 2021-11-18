@@ -13,14 +13,15 @@ def openapi(schema, host, port):
                 'post': {
                     'description': 'New item for {collection}',
                     'produces': ['application/json'],
-                    'consumes': ['application/json', 'multipart/form-data'],
                     'parameters': [
                         {'name': 'collection', 'in': 'path', 'required': True}
-                    ] + [{
-                        'name': 'item', 'in': 'body', 'required': False, 'schema': {
-                            'type': 'object', 'properties': {}
+                    ],
+                    'requestBody': {
+                        'content': {
+                            'application/json': {'schema': {'example': '{"key": "value"}'}},
+                            'text/plain': {'schema': {'example': 'key=value&key2=value2'}}
                         }
-                    }],
+                    },
                     'responses': {
                         '201': {'description': 'Created'}
                     }
@@ -51,14 +52,12 @@ def openapi(schema, host, port):
                 'produces': ['application/json'],
                 'consumes': ['application/json', 'multipart/form-data'],
                 'description': f'New item for {table}',
-                'parameters': [{
-                    'name': 'item', 'in': 'body', 'required': False, 'schema': {
-                        'type': 'object',
-                        'properties': dict(zip([key for key in columns.keys() if key != 'id'], [
-                            {'type': convert_type(value)} for key, value in columns.items() if key != 'id'
-                        ]))
+                'requestBody': {
+                    'content': {
+                        'application/json': {'schema': {'$ref': f'#/components/schemas/{table}'}},
+                        'text/plain': {'schema': {'example': 'key=value&key2=value2'}}
                     }
-                }],
+                },
                 'responses': {
                     '201': {'description': 'Created'}
                 }
@@ -86,14 +85,13 @@ def openapi(schema, host, port):
                 'consumes': ['application/json', 'multipart/form-data'],
                 'parameters': [
                     {'name': 'id', 'in': 'path', 'required': True}
-                ] + [{
-                    'name': 'item', 'in': 'body', 'required': False, 'schema': {
-                        'type': 'object',
-                        'properties': dict(zip([key for key in columns.keys() if key != 'id'], [
-                            {'type': convert_type(value)} for key, value in columns.items() if key != 'id'
-                        ]))
+                ],
+                'requestBody': {
+                    'content': {
+                        'application/json': {'schema': {'$ref': f'#/components/schemas/{table}'}},
+                        'text/plain': {'schema': {'example': 'key=value&key2=value2'}}
                     }
-                }],
+                },
                 'responses': {
                     '200': {'description': 'OK'},
                     '404': {'description': 'Not Found'}
@@ -112,6 +110,7 @@ def openapi(schema, host, port):
         definitions['components']['schemas'][table] = {"properties": {}}
 
         for row_name, row_type in columns.items():
-            definitions['components']['schemas'][table]["properties"][row_name] = {'type': convert_type(row_type)}
+            if row_name != 'id':
+                definitions['components']['schemas'][table]["properties"][row_name] = {'type': convert_type(row_type)}
 
     return definitions
