@@ -52,6 +52,11 @@ Delete an item
 DELETE /{collection}/{id}
 ```
 
+## Tests
+```
+python tests
+```
+
 ## Next steps
 - Auth / Roles
 - Dynamic / Static schema
