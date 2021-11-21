@@ -5,6 +5,7 @@ class Database:
         connection = sqlite3.connect(db_path)
         self.cursor = connection.cursor()
         self.execute = self.cursor.execute
+        self.commit = connection.commit
 
     def schema(self):
         result = {}
@@ -47,6 +48,7 @@ class Database:
         keys = ', '.join(list(body.keys()))
         values = str(list(body.values()))[1:-1]
         self.execute(f'INSERT INTO {table} ({keys}) VALUES ({values})')
+        self.commit()
 
         return self.read(table, str(self.cursor.lastrowid))
 
@@ -57,9 +59,12 @@ class Database:
                 self.execute(f'SELECT * FROM {table} WHERE id = {id} LIMIT 1')][0]
 
     def update(self, table: str, id: str, body: dict):
-        for key, value in body.items(): self.execute(f'UPDATE {table} SET {key} = {value} WHERE id = {id}')
+        for key, value in body.items(): self.execute(f'UPDATE {table} SET {key} = "{value}" WHERE id = {id}')
 
         return self.read(table, id)
 
     def delete(self, table: str, id: str):
+        data = self.read(table, id)
         self.execute(f'DELETE FROM {table} WHERE id = {id}')
+
+        return data
