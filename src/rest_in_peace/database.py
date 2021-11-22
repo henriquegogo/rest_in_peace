@@ -41,7 +41,7 @@ class Database:
         offset = params['offset'] if 'offset' in params else '0'
 
         return [dict(zip(schema, row)) for row in
-                self.execute(f'SELECT * FROM {table} WHERE {where if where else "TRUE"} \
+                self.execute(f'SELECT * FROM {table} WHERE {where if where else 1} \
                              ORDER BY {orderby} LIMIT {limit} OFFSET {offset}')]
 
     def create(self, table: str, body: dict):
