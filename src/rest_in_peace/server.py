@@ -8,7 +8,7 @@ class Server:
     routes = []
 
     def __init__(self, port: int = 8000):
-        self.host = 'localhost'
+        self.host = ''
         self.port = port
 
     def post(self, route: str):
@@ -24,18 +24,13 @@ class Server:
         return lambda func: self.routes.append(('DELETE', route, func))
 
     def run(self):
-        def serve_static(env, res):
+        def server(env, res):
             static_folder = 'public' + ('/index.html' if env['PATH_INFO'] == '/' else env['PATH_INFO'])
+            path_items = [item for item in env['PATH_INFO'].split('/')[1:] if item]
 
             if '.' in static_folder and os.path.exists(static_folder):
                 res('200 OK', [('Content-Type', mimetypes.guess_type(static_folder)[0])])
                 return util.FileWrapper(open(static_folder, "rb"))
-            else:
-                res('404 Not Found', [])
-                return ''
-
-        def server(env, res):
-            path_items = [item for item in env['PATH_INFO'].split('/')[1:] if item]
 
             for method, route, func in self.routes:
                 route_items = [item for item in route.split('/')[1:] if item]
@@ -47,24 +42,24 @@ class Server:
 
                     if env['CONTENT_LENGTH']:
                         body_data = env['wsgi.input'].read(int(env['CONTENT_LENGTH'])).decode()
-                        try: data.update(json.loads(body_data))
-                        except: data.update(dict(parse_qsl(body_data)))
+                        data.update(json.loads(body_data) if body_data[0] == '{' else dict(parse_qsl(body_data)))
 
                     try:
-                        res_body = json.dumps(func(*params, data) if bool(data) else func(*params))
-                        res_code = '201 Created' if method == 'POST' else \
-                            '204 No Content' if method == 'DELETE' else \
-                            '200 OK'
-                        res(res_code, [('Content-type', 'application/json; charset=utf-8')])
-                        return [res_body.encode()]
-                    except: pass
+                        res_data = func(*params, data) if bool(data) else func(*params)
+                        res_body, *res_attr = res_data if isinstance(res_data, tuple) else (res_data, '200 OK')
+                        content_type = 'text/plain'
 
-            if env['REQUEST_METHOD'] != 'GET':
-                res('400 Bad Request', [])
-                return ''
-            else:
-                return serve_static(env, res)
+                        if isinstance(res_body, dict) or isinstance(res_body, list):
+                            res_body = json.dumps(res_body)
+                            content_type = 'application/json'
+
+                        res(res_attr[0], res_attr[1] if len(res_attr) > 1 else [('Content-type', content_type)])
+                        return [res_body.encode()]
+
+                    except:
+                        res('404 Not Found', [])
+                        return ''
 
         with simple_server.make_server(self.host, self.port, server) as httpd:
-            print(f'INFO: Application running on {self.host}:{self.port} (Press CTRL+C to quit)')
+            print(f'INFO: Application running on localhost:{self.port} (Press CTRL+C to quit)')
             httpd.serve_forever()

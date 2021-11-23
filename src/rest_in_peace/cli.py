@@ -8,7 +8,7 @@ app = Server(int(argv[2]) if len(argv) > 2 else 8000)
 
 @app.get('/openapi.json')
 def definitions():
-    return openapi(db.schema(), app.host, app.port)
+    return openapi(db.schema(), 'localhost', app.port)
 
 @app.get('/{collection}')
 def list(collection: str, params: dict = {}):
@@ -17,11 +17,11 @@ def list(collection: str, params: dict = {}):
 @app.post('/{collection}')
 def create(collection: str, body: dict):
     db.table(collection, body)
-    return db.create(collection, body)
+    return db.create(collection, body), '201 Created'
 
 @app.delete('/{collection}')
 def drop(collection: str):
-    return db.drop(collection)
+    return db.drop(collection), '204 No Content'
 
 @app.get('/{collection}/{id}')
 def read(collection: str, id: str):
