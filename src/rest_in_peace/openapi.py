@@ -103,7 +103,8 @@ def openapi(schema, host, port):
                     {'name': 'id', 'in': 'path', 'required': True}
                 ],
                 'responses': {
-                    '204': {'description': 'No Content'}
+                    '200': {'description': 'OK'},
+                    '404': {'description': 'Not Found'}
                 }
             }
         }

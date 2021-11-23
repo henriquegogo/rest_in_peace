@@ -31,6 +31,8 @@ class Database:
 
     def drop(self, table: str):
         self.execute(f'DROP TABLE {table}')
+        self.commit()
+        return ''
 
     def list(self, table: str, params: dict):
         schema = [row[1] for row in self.execute(f'PRAGMA table_info({table})')]
@@ -60,11 +62,13 @@ class Database:
 
     def update(self, table: str, id: str, body: dict):
         for key, value in body.items(): self.execute(f'UPDATE {table} SET {key} = "{value}" WHERE id = {id}')
+        self.commit()
 
         return self.read(table, id)
 
     def delete(self, table: str, id: str):
         data = self.read(table, id)
         self.execute(f'DELETE FROM {table} WHERE id = {id}')
+        self.commit()
 
         return data

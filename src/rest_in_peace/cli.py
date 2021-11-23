@@ -33,7 +33,7 @@ def update(collection: str, id: str, body: dict):
 
 @app.delete('/{collection}/{id}')
 def delete(collection: str, id: str):
-    db.delete(collection, id)
+    return db.delete(collection, id)
 
 def main():
     app.run()

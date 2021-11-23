@@ -54,7 +54,7 @@ class Server:
                             content_type = 'application/json'
 
                         res(res_attr[0], res_attr[1] if len(res_attr) > 1 else [('Content-type', content_type)])
-                        return [res_body.encode()]
+                        return [res_body.encode()] if res_body else ''
 
                     except:
                         res('404 Not Found', [])
