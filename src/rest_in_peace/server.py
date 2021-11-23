@@ -53,7 +53,9 @@ class Server:
                             res_body = json.dumps(res_body)
                             content_type = 'application/json'
 
-                        res(res_attr[0], res_attr[1] if len(res_attr) > 1 else [('Content-type', content_type)])
+                        res(res_attr[0], [(k, v) for k, v in res_attr[1].items()] if len(res_attr) > 1
+                            and isinstance(res_attr[1], dict) else [('Content-type', content_type)])
+
                         return [res_body.encode()] if res_body else ''
 
                     except:
