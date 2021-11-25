@@ -3,13 +3,10 @@ sys.path.append('./src')
 from rest_in_peace import Database
 
 class TestDatabase(unittest.TestCase):
-    db_filename = 'test_database.db'
+    db_filename = ':memory:'
 
     def setUp(self):
         self.db = Database(self.db_filename)
-
-    def tearDown(self):
-        os.remove(self.db_filename)
 
     def test_drop(self):
         table = 'data_drop'
