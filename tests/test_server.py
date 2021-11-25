@@ -1,6 +1,5 @@
-import unittest
-from sys import path
-path.append('./src')
+import unittest, sys
+sys.path.append('./src')
 from rest_in_peace import Server
 
 class TestServer(unittest.TestCase):
